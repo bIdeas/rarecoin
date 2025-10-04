@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Coin Collection - For Sale</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Luxury Gold & Brown Theme */
+            --primary-gold: #DAA520;
+            --dark-gold: #B8860B;
+            --rich-brown: #8B4513;
+            --dark-brown: #5D2F0A;
+            --cream: #FFF8DC;
+            --light-gold: #F5DEB3;
+            --text-dark: #2F1B14;
+            --text-medium: #654321;
+            --border-gold: #E6B800;
+            
+            --shadow-luxury: 0 8px 32px rgba(139, 69, 19, 0.3);
+            --shadow-hover: 0 12px 40px rgba(139, 69, 19, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lora', serif;
+            background: linear-gradient(135deg, var(--cream) 0%, var(--light-gold) 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--rich-brown) 0%, var(--dark-brown) 100%);
+            color: var(--cream);
+            padding: 60px 20px;
+            text-align: center;
+            position: relative;
+            border-bottom: 8px solid var(--primary-gold);
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 3px solid var(--cream);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            font-style: italic;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--primary-gold);
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .nav-links {
+            display: inline-flex;
+            gap: 30px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--dark-brown);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: var(--cream);
+            border-color: var(--rich-brown);
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Statistics Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: var(--cream);
+            border: 6px solid var(--primary-gold);
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .stats-bar::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
+            border: 2px solid var(--rich-brown);
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .stat-item {
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--rich-brown);
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--text-medium);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Coin Grid */
+        .coins-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        /* Coin Card */
+        .coin-card {
+            background: var(--cream);
+            border: 6px solid var(--primary-gold);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.4s ease;
+            box-shadow: var(--shadow-luxury);
+        }
+
+        .coin-card::before {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            right: 6px;
+            bottom: 6px;
+            border: 2px solid var(--rich-brown);
+            border-radius: 12px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .coin-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--rich-brown);
+        }
+
+        .coin-card:hover::before {
+            border-color: var(--primary-gold);
+        }
+
+        /* Coin Images */
+        .coin-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+            z-index: 2;
+        }
+
+        .coin-image-container {
+            aspect-ratio: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coin-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .coin-image:hover {
+            transform: scale(1.05);
+        }
+
+        .image-label {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(139, 69, 19, 0.9);
+            color: var(--cream);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .no-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--light-gold);
+            color: var(--text-medium);
+            font-style: italic;
+        }
+
+        /* Coin Info */
+        .coin-info {
+            padding: 25px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .coin-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--rich-brown);
+            margin-bottom: 8px;
+        }
+
+        .coin-subtitle {
+            color: var(--text-medium);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .coin-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border-gold);
+        }
+
+        .detail-label {
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Pricing */
+        .pricing {
+            background: linear-gradient(135deg, var(--primary-gold), var(--dark-gold));
+            margin: 20px -25px -25px -25px;
+            padding: 20px 25px;
+            text-align: center;
+        }
+
+        .price-tag {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--cream);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .price-label {
+            color: var(--cream);
+            opacity: 0.9;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* Contact Section */
+        .contact-section {
+            background: var(--rich-brown);
+            color: var(--cream);
+            padding: 60px 20px;
+            text-align: center;
+            margin-top: 60px;
+            border: 8px solid var(--primary-gold);
+            position: relative;
+        }
+
+        .contact-section::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border: 3px solid var(--cream);
+            pointer-events: none;
+        }
+
+        .contact-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--cream);
+            border: 3px solid var(--primary-gold);
+            color: var(--rich-brown);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-gold);
+            color: var(--cream);
+            transform: translateY(-2px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2.5rem; }
+            .header p { font-size: 1.1rem; }
+            .coins-grid { grid-template-columns: 1fr; }
+            .nav-links { flex-direction: column; gap: 10px; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .coin-details { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1><i class="fas fa-coins"></i> Premium Coin Collection</h1>
+        <p>Rare & Collectible Coins for Serious Collectors</p>
+    </header>
+
+    <nav class="nav">
+        <ul class="nav-links">
+            <li><a href="#" class="active">All Coins</a></li>
+            <li><a href="#ancient">Ancient</a></li>
+            <li><a href="#modern">Modern</a></li>
+            <li><a href="#silver">Silver</a></li>
+            <li><a href="#gold">Gold</a></li>
+            <li><a href="index.html">Collection Manager</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number" id="totalCoins">0</span>
+                <span class="stat-label">Total Coins</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="totalValue">$0</span>
+                <span class="stat-label">Collection Value</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="avgGrade">N/A</span>
+                <span class="stat-label">Average Grade</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="countries">0</span>
+                <span class="stat-label">Countries</span>
+            </div>
+        </div>
+
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterCoins('all')">All Coins</button>
+            <button class="filter-btn" onclick="filterCoins('silver')">Silver</button>
+            <button class="filter-btn" onclick="filterCoins('gold')">Gold</button>
+            <button class="filter-btn" onclick="filterCoins('rare')">Rare</button>
+            <button class="filter-btn" onclick="filterCoins('modern')">Modern</button>
+        </div>
+
+        <div class="coins-grid" id="sellerCoinsGrid">
+            <!-- Coins will be loaded here -->
+        </div>
+    </div>
+
+    <section class="contact-section">
+        <h2><i class="fas fa-handshake"></i> Contact for Purchase</h2>
+        <p>Serious inquiries welcome. All coins authenticated and graded by professionals.</p>
+        <div class="contact-info">
+            <div class="contact-item">
+                <i class="fas fa-envelope"></i>
+                <span>coins@collector.com</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-phone"></i>
+                <span>+1 (555) 123-4567</span>
+            </div>
+            <div class="contact-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>Premium Coin Gallery</span>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        class CoinSeller {
+            constructor() {
+                this.coins = [];
+                this.loadCoinsFromCollection();
+                this.renderStats();
+                this.renderCoins();
+            }
+
+            loadCoinsFromCollection() {
+                const stored = localStorage.getItem('coinCollection');
+                if (stored) {
+                    this.coins = JSON.parse(stored);
+                }
+            }
+
+            renderStats() {
+                const totalCoins = this.coins.length;
+                const totalValue = this.calculateTotalValue();
+                const avgGrade = this.calculateAverageGrade();
+                const countries = this.getUniqueCountries();
+
+                document.getElementById('totalCoins').textContent = totalCoins;
+                document.getElementById('totalValue').textContent = `$${totalValue.toLocaleString()}`;
+                document.getElementById('avgGrade').textContent = avgGrade || 'N/A';
+                document.getElementById('countries').textContent = countries;
+            }
+
+            calculateTotalValue() {
+                return this.coins.reduce((total, coin) => {
+                    const estimate = parseFloat(coin.valuation?.currentEstimate) || 0;
+                    return total + estimate;
+                }, 0);
+            }
+
+            calculateAverageGrade() {
+                const grades = this.coins.map(coin => coin.condition?.grade).filter(Boolean);
+                if (grades.length === 0) return null;
+                
+                // Convert grades to numbers for averaging (simplified)
+                const numericGrades = grades.map(grade => {
+                    if (grade.includes('MS-')) return parseInt(grade.split('-')[1]) || 65;
+                    if (grade.includes('AU')) return 58;
+                    if (grade.includes('XF')) return 45;
+                    if (grade.includes('VF')) return 30;
+                    return 25;
+                });
+                
+                const avg = numericGrades.reduce((sum, grade) => sum + grade, 0) / numericGrades.length;
+                return `MS-${Math.round(avg)}`;
+            }
+
+            getUniqueCountries() {
+                const countries = new Set(this.coins.map(coin => coin.metadata?.country).filter(Boolean));
+                return countries.size;
+            }
+
+            renderCoins(filter = 'all') {
+                const container = document.getElementById('sellerCoinsGrid');
+                let filteredCoins = this.coins;
+
+                if (filter !== 'all') {
+                    filteredCoins = this.coins.filter(coin => {
+                        switch (filter) {
+                            case 'silver':
+                                return coin.metadata?.metal?.toLowerCase().includes('silver');
+                            case 'gold':
+                                return coin.metadata?.metal?.toLowerCase().includes('gold');
+                            case 'rare':
+                                return (parseFloat(coin.valuation?.currentEstimate) || 0) > 1000;
+                            case 'modern':
+                                return (parseInt(coin.metadata?.year) || 0) > 1950;
+                            default:
+                                return true;
+                        }
+                    });
+                }
+
+                container.innerHTML = filteredCoins.map(coin => this.renderCoinCard(coin)).join('');
+            }
+
+            renderCoinCard(coin) {
+                const price = parseFloat(coin.valuation?.currentEstimate) || 0;
+                const formattedPrice = price > 0 ? `$${price.toLocaleString()}` : 'Contact for Price';
+                
+                return `
+                    <div class="coin-card" data-metal="${coin.metadata?.metal || ''}" data-year="${coin.metadata?.year || ''}">
+                        <div class="coin-images">
+                            <div class="coin-image-container">
+                                <div class="image-label">Obverse</div>
+                                ${coin.images?.obverse ? 
+                                    `<img src="${coin.images.obverse}" alt="Obverse" class="coin-image">` :
+                                    `<div class="no-image">No Image Available</div>`
+                                }
+                            </div>
+                            <div class="coin-image-container">
+                                <div class="image-label">Reverse</div>
+                                ${coin.images?.reverse ? 
+                                    `<img src="${coin.images.reverse}" alt="Reverse" class="coin-image">` :
+                                    `<div class="no-image">No Image Available</div>`
+                                }
+                            </div>
+                        </div>
+                        
+                        <div class="coin-info">
+                            <h3 class="coin-title">${coin.title}</h3>
+                            <p class="coin-subtitle">${coin.metadata?.country || 'Unknown Origin'} • ${coin.metadata?.year || 'Date Unknown'}</p>
+                            
+                            <div class="coin-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Denomination:</span>
+                                    <span class="detail-value">${coin.metadata?.denomination || 'N/A'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Metal:</span>
+                                    <span class="detail-value">${coin.metadata?.metal || 'N/A'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Grade:</span>
+                                    <span class="detail-value">${coin.condition?.grade || 'Ungraded'}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Weight:</span>
+                                    <span class="detail-value">${coin.metadata?.weight || 'N/A'}</span>
+                                </div>
+                            </div>
+                            
+                            ${coin.condition?.notes ? `<p style="font-style: italic; color: var(--text-medium); margin: 15px 0;">"${coin.condition.notes}"</p>` : ''}
+                            
+                            <div class="pricing">
+                                <div class="price-tag">${formattedPrice}</div>
+                                <div class="price-label">Collector Price</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Filter functionality
+        function filterCoins(filter) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            coinSeller.renderCoins(filter);
+        }
+
+        // Initialize when page loads
+        let coinSeller;
+        document.addEventListener('DOMContentLoaded', () => {
+            coinSeller = new CoinSeller();
+        });
+
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            coinSeller.loadCoinsFromCollection();
+            coinSeller.renderStats();
+            coinSeller.renderCoins();
+        }, 30000);
+    </script>
+</body>
+</html>

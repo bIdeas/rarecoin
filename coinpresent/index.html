@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Coin Collection Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="module" src="js/app-bootstrap.js" defer></script>
+    <script type="module" src="js/market-intel.js" defer></script>
+    <script type="module" src="js/ai-orchestrator.js" defer></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                    <i class="fas fa-coins"></i>
+                    Professional Coin Collection Manager
+                </h1>
+                <div class="header-subtitle">Advanced Analysis & Valuation Platform</div>
+                <div class="header-controls">
+                    <button class="btn btn-primary" onclick="addNewCoin()">
+                        <i class="fas fa-plus"></i> Add Coin
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportCollection()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.open('seller.html', '_blank')">
+                        <i class="fas fa-store"></i> Seller View
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleViewMode()">
+                        <i class="fas fa-eye"></i> <span id="viewModeText">Analysis View</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="mode-selector">
+                <label>Interaction Mode:</label>
+                <div class="mode-buttons">
+                    <button class="mode-btn active" data-mode="annotate" onclick="setMode('annotate')">
+                        <i class="fas fa-edit"></i> Annotate
+                    </button>
+                    <button class="mode-btn" data-mode="move" onclick="setMode('move')">
+                        <i class="fas fa-arrows-alt"></i> Move
+                    </button>
+                    <button class="mode-btn" data-mode="view" onclick="setMode('view')">
+                        <i class="fas fa-eye"></i> View Only
+                    </button>
+                </div>
+            </div>
+            <div class="annotation-tools">
+                <label>Quick Annotations:</label>
+                <div class="annotation-buttons">
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Date')">Date</button>
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Mintmark')">Mintmark</button>
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Obverse')">Obverse</button>
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Reverse')">Reverse</button>
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Edge')">Edge</button>
+                    <button class="annotation-btn" onclick="setQuickAnnotation('Condition')">Condition</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Comparison View Toggle -->
+            <div class="view-controls">
+                <button class="btn btn-outline" onclick="toggleComparisonView()" id="comparisonToggle">
+                    <i class="fas fa-columns"></i> Enable Comparison View
+                </button>
+            </div>
+
+            <!-- Coins Container -->
+            <div class="coins-container" id="coinsContainer">
+                <!-- Coins will be dynamically generated here -->
+            </div>
+
+            <!-- Comparison Panel (Initially Hidden) -->
+            <div class="comparison-panel hidden" id="comparisonPanel">
+                <h3><i class="fas fa-balance-scale"></i> Side-by-Side Comparison</h3>
+                <div class="comparison-content">
+                    <div class="comparison-slot" id="comparisonSlot1">
+                        <p>Select a coin to compare</p>
+                    </div>
+                    <div class="comparison-divider"></div>
+                    <div class="comparison-slot" id="comparisonSlot2">
+                        <p>Select another coin to compare</p>
+                    </div>
+                </div>
+                <div class="comparison-actions">
+                    <button class="btn btn-secondary" onclick="clearComparison()">Clear Comparison</button>
+                    <button class="btn btn-primary" onclick="exportComparison()">Export Comparison</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Educational Tips Sidebar -->
+        <aside class="educational-sidebar">
+            <h3><i class="fas fa-lightbulb"></i> Professional Tips</h3>
+            <div class="tip-card">
+                <h4>Photography Guidelines</h4>
+                <ul>
+                    <li>Use natural lighting or LED panels</li>
+                    <li>Photograph at 45° angle to reduce glare</li>
+                    <li>Include a scale reference (ruler/coin)</li>
+                    <li>Capture both obverse and reverse</li>
+                </ul>
+            </div>
+            <div class="tip-card">
+                <h4>Identification Essentials</h4>
+                <ul>
+                    <li>Record exact date and mintmark</li>
+                    <li>Measure diameter (mm) and weight (g)</li>
+                    <li>Note metal composition</li>
+                    <li>Document edge characteristics</li>
+                </ul>
+            </div>
+            <div class="tip-card">
+                <h4>Valuation Factors</h4>
+                <ul>
+                    <li>Rarity and mintage numbers</li>
+                    <li>Condition (grade) assessment</li>
+                    <li>Historical significance</li>
+                    <li>Market demand trends</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <!-- Annotation Edit Modal -->
+    <div class="modal" id="annotationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Annotation</h3>
+                <button class="modal-close" onclick="closeModal('annotationModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Annotation Text:</label>
+                    <input type="text" id="annotationText" placeholder="Enter annotation text">
+                </div>
+                <div class="form-group">
+                    <label>Color:</label>
+                    <div class="color-picker">
+                        <input type="color" id="annotationColor" value="#f97316">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('annotationModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAnnotation()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Collection</h3>
+                <button class="modal-close" onclick="closeModal('exportModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <div class="form-group">
+                        <label>Export Format:</label>
+                        <select id="exportFormat">
+                            <option value="json">JSON Data</option>
+                            <option value="csv">CSV Spreadsheet</option>
+                            <option value="html">HTML Report</option>
+                            <option value="pdf">PDF Report</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Include:</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" checked> Images</label>
+                            <label><input type="checkbox" checked> Annotations</label>
+                            <label><input type="checkbox" checked> Valuations</label>
+                            <label><input type="checkbox" checked> Notes</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('exportModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="performExport()">Export</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
