@@ -1718,6 +1718,31 @@ function handleMainImageDrop(event, coinId, side) {
     }
 }
 
+// Media control functions
+function setMediaSortMode(mode) {
+    if (coinManager) {
+        coinManager.mediaSortMode = mode;
+        coinManager.renderGlobalMediaControls();
+        coinManager.saveToStorage();
+    }
+}
+
+function setMediaFilter(filter) {
+    if (coinManager) {
+        coinManager.mediaFilter = filter;
+        coinManager.renderGlobalMediaControls();
+        coinManager.saveToStorage();
+    }
+}
+
+function setMediaViewMode(mode) {
+    if (coinManager) {
+        coinManager.mediaViewMode = mode;
+        coinManager.renderGlobalMediaControls();
+        coinManager.saveToStorage();
+    }
+}
+
 // Close modal when clicking outside
 document.addEventListener('click', function(event) {
     if (event.target.classList.contains('modal')) {

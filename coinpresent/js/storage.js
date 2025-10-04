@@ -4,6 +4,24 @@ import { loadSupabaseClient } from "./cdnClients.js";
 import { supabaseConfig } from "./supabaseConfig.js";
 
 let supabaseInstance = null;
+let storageInitialized = false;
+
+export async function initializeStorage() {
+  if (storageInitialized) {
+    console.log("Storage already initialized");
+    return;
+  }
+  
+  console.log("Storage module initialized");
+  storageInitialized = true;
+  
+  // Pre-initialize Supabase client
+  try {
+    await ensureSupabase();
+  } catch (error) {
+    console.warn("Supabase initialization failed, will use fallback storage", error);
+  }
+}
 
 async function ensureSupabase() {
   if (supabaseInstance) return supabaseInstance;
