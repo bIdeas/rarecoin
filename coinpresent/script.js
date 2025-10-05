@@ -15,6 +15,16 @@ class CoinCollectionManager {
         this.mediaSortMode = 'curated';
         this.mediaViewMode = 'masonry';
         this.mediaFilter = 'all';
+        
+        // Console and logging system
+        this.consoleExpanded = false;
+        this.consoleLogs = [];
+        this.maxConsoleLogs = 100;
+        this.serviceStatuses = {
+            ai: { status: 'initializing', model: null, progress: 0 },
+            storage: { status: 'ready', progress: 100 },
+            market: { status: 'initializing', progress: 0 }
+        };
 
         this.init();
     }
@@ -23,6 +33,8 @@ class CoinCollectionManager {
         this.loadFromStorage();
         this.renderCoins();
         this.setupEventListeners();
+        this.initializeConsole();
+        this.initializeServices();
         
         // Add initial sample coin if none exist
         if (this.coins.length === 0) {
@@ -30,6 +42,173 @@ class CoinCollectionManager {
         }
 
         this.renderGlobalMediaControls();
+    }
+    
+    initializeConsole() {
+        this.logToConsole('Application initialized', 'info');
+        this.logToConsole('Console system ready', 'success');
+    }
+    
+    async initializeServices() {
+        // Initialize AI services
+        this.updateServiceStatus('ai', 'initializing', 10);
+        this.logToConsole('Initializing AI services...', 'info');
+        
+        try {
+            const { initializeAIOrchestrator } = await import('./js/ai-orchestrator.js');
+            await initializeAIOrchestrator();
+            
+            // Test AI model initialization
+            this.updateServiceStatus('ai', 'testing', 50);
+            this.logToConsole('Testing AI model initialization...', 'info');
+            
+            // Check if TensorFlow.js is available
+            if (typeof tf !== 'undefined') {
+                this.logToConsole(`TensorFlow.js v${tf.version.tfjs} loaded successfully`, 'success');
+                
+                // Initialize and test the offline model
+                const { initializeOfflineModel } = await import('./js/ai/offlineModel.js');
+                const offlineModel = await initializeOfflineModel();
+                
+                if (offlineModel) {
+                    this.updateServiceStatus('ai', 'testing', 75);
+                    this.logToConsole('Testing MobileNet model...', 'info');
+                    
+                    // Create a simple test image
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 224;
+                    canvas.height = 224;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(0, 0, 224, 224);
+                    ctx.fillStyle = '#DAA520';
+                    ctx.beginPath();
+                    ctx.arc(112, 112, 80, 0, 2 * Math.PI);
+                    ctx.fill();
+                    
+                    // Test classification
+                    const testResult = await offlineModel.analyze([canvas.toDataURL()], { classify: true });
+                    
+                    if (testResult.success) {
+                        this.updateServiceStatus('ai', 'ready', 100, 'TensorFlow.js + MobileNet');
+                        this.logToConsole('AI Model test successful: MobileNet classification working', 'success');
+                        this.logToConsole(`Test classification: ${testResult.results[0]?.classification?.topPrediction?.label || 'Unknown'}`, 'info');
+                    } else {
+                        this.updateServiceStatus('ai', 'error', 0);
+                        this.logToConsole('AI Model test failed: Classification not working', 'error');
+                    }
+                } else {
+                    this.updateServiceStatus('ai', 'error', 0);
+                    this.logToConsole('AI initialization failed: Could not initialize offline model', 'error');
+                }
+            } else {
+                this.updateServiceStatus('ai', 'error', 0);
+                this.logToConsole('AI initialization failed: TensorFlow.js not available', 'error');
+            }
+        } catch (error) {
+            this.updateServiceStatus('ai', 'error', 0);
+            this.logToConsole(`AI initialization failed: ${error.message}`, 'error');
+        }
+        
+        // Initialize market intelligence
+        this.updateServiceStatus('market', 'initializing', 30);
+        this.logToConsole('Initializing market intelligence...', 'info');
+        
+        try {
+            const { initializeMarketIntel } = await import('./js/market-intel.js');
+            initializeMarketIntel();
+            this.updateServiceStatus('market', 'ready', 100);
+            this.logToConsole('Market intelligence ready', 'success');
+        } catch (error) {
+            this.updateServiceStatus('market', 'error', 0);
+            this.logToConsole(`Market intelligence failed: ${error.message}`, 'error');
+        }
+    }
+    
+    logToConsole(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = {
+            timestamp,
+            message,
+            type,
+            id: Date.now()
+        };
+        
+        this.consoleLogs.unshift(logEntry);
+        
+        // Keep only the latest logs
+        if (this.consoleLogs.length > this.maxConsoleLogs) {
+            this.consoleLogs = this.consoleLogs.slice(0, this.maxConsoleLogs);
+        }
+        
+        this.updateConsoleDisplay();
+        
+        // Also log to browser console
+        const consoleMethod = type === 'error' ? 'error' : type === 'warning' ? 'warn' : 'log';
+        console[consoleMethod](`[${timestamp}] ${message}`);
+    }
+    
+    updateServiceStatus(service, status, progress, model = null) {
+        this.serviceStatuses[service] = {
+            status,
+            progress,
+            model: model || this.serviceStatuses[service].model
+        };
+        this.updateServiceStatusDisplay();
+    }
+    
+    updateConsoleDisplay() {
+        const consoleContent = document.getElementById('consoleContent');
+        if (!consoleContent) return;
+        
+        const logsHtml = this.consoleLogs.map(log => `
+            <div class="console-log console-${log.type}">
+                <span class="console-timestamp">${log.timestamp}</span>
+                <span class="console-message">${log.message}</span>
+            </div>
+        `).join('');
+        
+        consoleContent.innerHTML = logsHtml;
+    }
+    
+    updateServiceStatusDisplay() {
+        const statusContainer = document.getElementById('serviceStatuses');
+        if (!statusContainer) return;
+        
+        const statusHtml = Object.entries(this.serviceStatuses).map(([service, status]) => `
+            <div class="service-status service-${status.status}">
+                <div class="service-header">
+                    <span class="service-name">${service.toUpperCase()}</span>
+                    <span class="service-status-text">${status.status}</span>
+                    ${status.model ? `<span class="service-model">${status.model}</span>` : ''}
+                </div>
+                <div class="service-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${status.progress}%"></div>
+                    </div>
+                    <span class="progress-text">${status.progress}%</span>
+                </div>
+            </div>
+        `).join('');
+        
+        statusContainer.innerHTML = statusHtml;
+    }
+    
+    toggleConsole() {
+        this.consoleExpanded = !this.consoleExpanded;
+        const consolePanel = document.getElementById('consolePanel');
+        const toggleBtn = document.getElementById('consoleToggle');
+        
+        if (consolePanel) {
+            consolePanel.classList.toggle('expanded', this.consoleExpanded);
+        }
+        
+        if (toggleBtn) {
+            const icon = toggleBtn.querySelector('i');
+            if (icon) {
+                icon.className = this.consoleExpanded ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+            }
+        }
     }
 
     renderGlobalMediaControls() {
@@ -256,6 +435,9 @@ class CoinCollectionManager {
                              <button class="btn btn-small btn-secondary" onclick="openImageZoom('obverse', ${coin.id}); event.stopPropagation();" title="Zoom Image">
                                  <i class="fas fa-search-plus"></i>
                              </button>
+                             <button class="btn btn-small btn-danger" onclick="deleteImage(${coin.id}, 'obverse'); event.stopPropagation();" title="Delete Image">
+                                 <i class="fas fa-trash"></i>
+                             </button>
                          </div>`
                         :
                         `<div class="image-placeholder" 
@@ -284,6 +466,9 @@ class CoinCollectionManager {
                              </button>
                              <button class="btn btn-small btn-secondary" onclick="openImageZoom('reverse', ${coin.id}); event.stopPropagation();" title="Zoom Image">
                                  <i class="fas fa-search-plus"></i>
+                             </button>
+                             <button class="btn btn-small btn-danger" onclick="deleteImage(${coin.id}, 'reverse'); event.stopPropagation();" title="Delete Image">
+                                 <i class="fas fa-trash"></i>
                              </button>
                          </div>`
                         :
@@ -1047,11 +1232,13 @@ class CoinCollectionManager {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = async (e) => {
+        this.logToConsole(`Processing ${side} image for coin ${coinId}...`, 'info');
+        
+        // Compress and resize image to save storage space
+        this.compressImage(file, 800, 0.8).then(compressedDataUrl => {
             const coin = this.coins.find(c => c.id === coinId);
             if (coin) {
-                coin.images[side] = e.target.result;
+                coin.images[side] = compressedDataUrl;
                 
                 // Initialize AI analysis storage if not exists
                 if (!coin.aiAnalysis) {
@@ -1061,11 +1248,53 @@ class CoinCollectionManager {
                 this.renderCoins();
                 this.saveToStorage();
                 
-                // Trigger AI analysis
+                this.logToConsole(`${side} image processed and saved`, 'success');
+                
+                // Trigger AI analysis with compressed image
                 this.analyzeImage(coinId, side, file);
             }
-        };
-        reader.readAsDataURL(file);
+        }).catch(error => {
+            this.logToConsole(`Failed to process ${side} image: ${error.message}`, 'error');
+            console.error('Image compression failed:', error);
+        });
+    }
+    
+    // Compress image to reduce storage usage
+    compressImage(file, maxWidth = 800, quality = 0.8) {
+        return new Promise((resolve, reject) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Calculate new dimensions
+                let { width, height } = img;
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                // Draw and compress
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // Convert to compressed data URL
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                
+                // Check size reduction
+                const originalSize = file.size;
+                const compressedSize = Math.round((compressedDataUrl.length * 3) / 4); // Approximate size
+                
+                console.log(`Image compressed: ${Math.round(originalSize/1024)}KB → ${Math.round(compressedSize/1024)}KB`);
+                
+                resolve(compressedDataUrl);
+            };
+            
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = URL.createObjectURL(file);
+        });
     }
     
     // AI Analysis
@@ -1254,16 +1483,49 @@ class CoinCollectionManager {
     renderComparisonSlot(coin) {
         const image = coin.images.obverse || coin.images.reverse;
         return `
-            <div style="text-align: center;">
-                ${image ? `<img src="${image}" alt="${coin.title}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-bottom: 12px;">` : ''}
+            <div style="text-align: center;" class="comparison-coin-content">
+                ${image ? `<img src="${image}" alt="${coin.title}" style="max-width: 100%; max-height: 150px; border-radius: 8px; margin-bottom: 12px; cursor: pointer;" onclick="openImageZoom('${coin.images.obverse ? 'obverse' : 'reverse'}', ${coin.id})">` : ''}
                 <h4>${coin.title}</h4>
                 <div class="text-muted">${coin.metadata.country} ${coin.metadata.year}</div>
                 <div class="text-muted">${coin.condition.grade}</div>
                 <div style="color: var(--success-color); font-weight: 600; margin-top: 8px;">
                     ${coin.valuation.currentEstimate || `$${coin.valuation.scenarios.common.min}-${coin.valuation.scenarios.collectible.max}`}
                 </div>
+                <button class="btn btn-small btn-secondary" onclick="removeFromComparison(${coin.id})" style="margin-top: 8px;">
+                    <i class="fas fa-times"></i> Remove
+                </button>
             </div>
         `;
+    }
+    
+    removeFromComparison(coinId) {
+        if (this.comparisonSlots[0] && this.comparisonSlots[0].id === coinId) {
+            this.comparisonSlots[0] = null;
+            document.getElementById('comparisonSlot1').innerHTML = '<p>Select a coin to compare</p>';
+            document.getElementById('comparisonSlot1').classList.remove('has-coin');
+        } else if (this.comparisonSlots[1] && this.comparisonSlots[1].id === coinId) {
+            this.comparisonSlots[1] = null;
+            document.getElementById('comparisonSlot2').innerHTML = '<p>Select another coin to compare</p>';
+            document.getElementById('comparisonSlot2').classList.remove('has-coin');
+        }
+    }
+    
+    deleteImage(coinId, side) {
+        if (confirm('Are you sure you want to delete this image?')) {
+            const coin = this.coins.find(c => c.id === coinId);
+            if (coin) {
+                coin.images[side] = null;
+                
+                // Clear AI analysis for this side
+                if (coin.aiAnalysis && coin.aiAnalysis[side]) {
+                    coin.aiAnalysis[side] = null;
+                }
+                
+                this.renderCoins();
+                this.saveToStorage();
+                this.logToConsole(`Deleted ${side} image for ${coin.title}`, 'info');
+            }
+        }
     }
 
     clearComparison() {
@@ -1418,13 +1680,162 @@ class CoinCollectionManager {
     }
 
     // Storage Management
-    saveToStorage() {
-        localStorage.setItem('coinCollection', JSON.stringify(this.coins));
-        localStorage.setItem('coinCollectionMeta', JSON.stringify({
-            nextCoinId: this.nextCoinId,
-            nextAnnotationId: this.nextAnnotationId,
-            expandedCoins: Array.from(this.expandedCoins)
-        }));
+    async saveToStorage() {
+        try {
+            // Check storage quota before saving
+            const dataToSave = JSON.stringify(this.coins);
+            const metaToSave = JSON.stringify({
+                nextCoinId: this.nextCoinId,
+                nextAnnotationId: this.nextAnnotationId,
+                expandedCoins: Array.from(this.expandedCoins)
+            });
+            
+            // Estimate storage size (rough calculation)
+            const estimatedSize = (dataToSave.length + metaToSave.length) * 2; // UTF-16 encoding
+            const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
+            
+            // Check if we're approaching localStorage limit (usually 5-10MB)
+            if (estimatedSize > 4 * 1024 * 1024) { // 4MB threshold
+                this.logToConsole(`Storage size (${sizeMB}MB) approaching limit, compressing...`, 'warning');
+                await this.handleStorageQuotaExceeded();
+                return;
+            }
+            
+            localStorage.setItem('coinCollection', dataToSave);
+            localStorage.setItem('coinCollectionMeta', metaToSave);
+            
+            this.logToConsole(`Storage saved successfully (${sizeMB}MB)`, 'success');
+            this.updateStorageStatus(estimatedSize);
+        } catch (error) {
+            if (error.name === 'QuotaExceededError') {
+                this.logToConsole('Storage quota exceeded during save', 'error');
+                await this.handleStorageQuotaExceeded();
+            } else {
+                console.error('Storage error:', error);
+                this.logToConsole(`Storage error: ${error.message}`, 'error');
+            }
+        }
+    }
+    
+    updateStorageStatus(usedBytes) {
+        const usedMB = (usedBytes / (1024 * 1024)).toFixed(2);
+        const maxMB = 5; // Approximate localStorage limit
+        const percentage = Math.min((usedBytes / (maxMB * 1024 * 1024)) * 100, 100);
+        
+        this.updateServiceStatus('storage', 'ready', percentage, `${usedMB}MB used`);
+        
+        if (percentage > 80) {
+            this.logToConsole(`Storage usage high: ${usedMB}MB (${percentage.toFixed(1)}%)`, 'warning');
+        }
+    }
+    
+    async handleStorageQuotaExceeded() {
+        this.logToConsole('Storage quota exceeded! Compressing images...', 'warning');
+        
+        // Compress images in all coins
+        let compressionApplied = false;
+        
+        for (const coin of this.coins) {
+            // Compress main images
+            if (coin.images.obverse && coin.images.obverse.length > 100000) {
+                coin.images.obverse = await this.compressDataUrl(coin.images.obverse);
+                compressionApplied = true;
+            }
+            if (coin.images.reverse && coin.images.reverse.length > 100000) {
+                coin.images.reverse = await this.compressDataUrl(coin.images.reverse);
+                compressionApplied = true;
+            }
+            
+            // Compress media images
+            if (coin.media && coin.media.images) {
+                for (const media of coin.media.images) {
+                    if (media.data && media.data.length > 100000) {
+                        media.data = await this.compressDataUrl(media.data);
+                        compressionApplied = true;
+                    }
+                }
+            }
+        }
+        
+        if (compressionApplied) {
+            this.logToConsole('Images compressed, retrying save...', 'info');
+            try {
+                localStorage.setItem('coinCollection', JSON.stringify(this.coins));
+                localStorage.setItem('coinCollectionMeta', JSON.stringify({
+                    nextCoinId: this.nextCoinId,
+                    nextAnnotationId: this.nextAnnotationId,
+                    expandedCoins: Array.from(this.expandedCoins)
+                }));
+                this.logToConsole('Storage saved after compression', 'success');
+            } catch (retryError) {
+                this.logToConsole('Storage still exceeded after compression. Consider using fewer/smaller images.', 'error');
+                alert('Storage quota exceeded! Please delete some images or use smaller file sizes.');
+            }
+        } else {
+            this.logToConsole('No images to compress. Storage quota exceeded.', 'error');
+            alert('Storage quota exceeded! Please delete some coins or images.');
+        }
+    }
+    
+    // Synchronous compression for data URLs
+    compressDataUrl(dataUrl, quality = 0.6) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Calculate new dimensions (max 600px for storage compression)
+                const maxSize = 600;
+                let { width, height } = img;
+                
+                if (width > height && width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                } else if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            
+            img.src = dataUrl;
+        });
+    }
+    
+    compressImage(dataUrl, quality = 0.7) {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            
+            img.onload = () => {
+                // Calculate new dimensions (max 800px)
+                const maxSize = 800;
+                let { width, height } = img;
+                
+                if (width > height && width > maxSize) {
+                    height = (height * maxSize) / width;
+                    width = maxSize;
+                } else if (height > maxSize) {
+                    width = (width * maxSize) / height;
+                    height = maxSize;
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            
+            img.src = dataUrl;
+        });
     }
 
     loadFromStorage() {
@@ -1629,6 +2040,10 @@ function addToComparison(coinId) {
     coinManager.addToComparison(coinId);
 }
 
+function removeFromComparison(coinId) {
+    coinManager.removeFromComparison(coinId);
+}
+
 function clearComparison() {
     coinManager.clearComparison();
 }
@@ -1700,40 +2115,91 @@ async function simulateWebSearch(query, coin) {
     const year = parseInt(coin.metadata.year) || 2000;
     const country = coin.metadata.country || 'United States';
     
-    return [
+    // Generate more comprehensive results with images
+    const results = [
         {
             title: `${coin.metadata.year} ${country} ${coin.metadata.denomination} - Heritage Auctions`,
             price: `$${Math.round(basePrice * (0.8 + Math.random() * 0.4))}`,
             condition: 'MS-65',
             source: 'Heritage Auctions',
-            url: '#',
-            description: `Certified ${coin.metadata.denomination} in excellent condition. Well-struck example with original luster.`
+            url: `https://coins.ha.com/search?q=${encodeURIComponent(query)}`,
+            image: 'https://via.placeholder.com/120x120/8B4513/FFFFFF?text=Coin',
+            description: `Certified ${coin.metadata.denomination} in excellent condition. Well-struck example with original luster.`,
+            soldDate: '2024-01-15'
         },
         {
             title: `${coin.metadata.year} ${coin.metadata.denomination} PCGS Graded - eBay`,
             price: `$${Math.round(basePrice * (0.6 + Math.random() * 0.8))}`,
             condition: 'AU-58',
             source: 'eBay',
-            url: '#',
-            description: `PCGS certified coin with minimal wear. Popular collector item.`
+            url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`,
+            image: 'https://via.placeholder.com/120x120/DAA520/FFFFFF?text=eBay',
+            description: `PCGS certified coin with minimal wear. Popular collector item.`,
+            soldDate: '2024-02-03'
         },
         {
             title: `${country} ${coin.metadata.denomination} Price Guide - PCGS`,
             price: `$${Math.round(basePrice * (0.9 + Math.random() * 0.2))} - $${Math.round(basePrice * (1.1 + Math.random() * 0.3))}`,
             condition: 'Various',
             source: 'PCGS Price Guide',
-            url: '#',
-            description: `Current market values for ${coin.metadata.denomination} coins in various grades.`
+            url: `https://www.pcgs.com/prices`,
+            image: 'https://via.placeholder.com/120x120/228B22/FFFFFF?text=PCGS',
+            description: `Current market values for ${coin.metadata.denomination} coins in various grades.`,
+            soldDate: 'Current'
         },
         {
             title: `${coin.metadata.year} ${coin.metadata.denomination} - Stack's Bowers`,
             price: `$${Math.round(basePrice * (1.1 + Math.random() * 0.4))}`,
             condition: 'MS-64',
             source: 'Stack\'s Bowers',
-            url: '#',
-            description: `Professional numismatic auction house. Includes full provenance and detailed imagery.`
+            url: `https://www.stacksbowers.com/search?q=${encodeURIComponent(query)}`,
+            image: 'https://via.placeholder.com/120x120/A0522D/FFFFFF?text=SB',
+            description: `Professional numismatic auction house. Includes full provenance and detailed imagery.`,
+            soldDate: '2024-01-28'
+        },
+        {
+            title: `${coin.metadata.year} ${coin.metadata.denomination} NGC Certified`,
+            price: `$${Math.round(basePrice * (0.9 + Math.random() * 0.3))}`,
+            condition: 'MS-63',
+            source: 'NGC Registry',
+            url: `https://www.ngccoin.com/price-guide/`,
+            image: 'https://via.placeholder.com/120x120/CD853F/FFFFFF?text=NGC',
+            description: `NGC certified example with detailed population reports and market analysis.`,
+            soldDate: '2024-02-10'
+        },
+        {
+            title: `${coin.metadata.year} ${coin.metadata.denomination} Auction Record`,
+            price: `$${Math.round(basePrice * (1.2 + Math.random() * 0.5))}`,
+            condition: 'MS-66',
+            source: 'Coin World',
+            url: `https://www.coinworld.com/search?q=${encodeURIComponent(query)}`,
+            image: 'https://via.placeholder.com/120x120/5D2F0A/FFFFFF?text=CW',
+            description: `Recent auction record for premium grade example. Market trending upward.`,
+            soldDate: '2024-01-20'
+        },
+        {
+            title: `${country} ${coin.metadata.denomination} Collector Forum`,
+            price: `$${Math.round(basePrice * (0.7 + Math.random() * 0.6))}`,
+            condition: 'VF-30',
+            source: 'CoinTalk Forum',
+            url: `https://www.cointalk.com/search/?q=${encodeURIComponent(query)}`,
+            image: 'https://via.placeholder.com/120x120/654321/FFFFFF?text=CT',
+            description: `Community discussion and recent sales data from collector forums.`,
+            soldDate: '2024-02-05'
+        },
+        {
+            title: `${coin.metadata.year} ${coin.metadata.denomination} Variety Guide`,
+            price: `$${Math.round(basePrice * (0.5 + Math.random() * 1.0))}`,
+            condition: 'Various',
+            source: 'CONECA',
+            url: `https://www.conecaonline.org/`,
+            image: 'https://via.placeholder.com/120x120/8B7355/FFFFFF?text=VAR',
+            description: `Variety and error coin information with pricing for different die states.`,
+            soldDate: 'Reference'
         }
     ];
+    
+    return results;
 }
 
 function displaySearchResults(coinId, results) {
@@ -1742,18 +2208,29 @@ function displaySearchResults(coinId, results) {
     
     const html = `
         <div class="search-results">
-            <h4><i class="fas fa-search"></i> Market Comparison Results</h4>
+            <h4><i class="fas fa-search"></i> Market Comparison Results (${results.length} found)</h4>
             ${results.map(result => `
-                <div class="search-result-item">
-                    <div class="result-header">
-                        <h5 class="result-title">${result.title}</h5>
-                        <div class="result-price">${result.price}</div>
+                <div class="search-result-item" onclick="window.open('${result.url}', '_blank')">
+                    <div class="result-content">
+                        <div class="result-image">
+                            <img src="${result.image}" alt="Coin" onerror="this.src='https://via.placeholder.com/120x120/666/FFF?text=No+Image'">
+                        </div>
+                        <div class="result-info">
+                            <div class="result-header">
+                                <h5 class="result-title">${result.title}</h5>
+                                <div class="result-price">${result.price}</div>
+                            </div>
+                            <div class="result-details">
+                                <span class="result-condition">Grade: ${result.condition}</span>
+                                <span class="result-source">Source: ${result.source}</span>
+                                <span class="result-date">Date: ${result.soldDate}</span>
+                            </div>
+                            <p class="result-description">${result.description}</p>
+                            <div class="result-link">
+                                <i class="fas fa-external-link-alt"></i> Click to view on ${result.source}
+                            </div>
+                        </div>
                     </div>
-                    <div class="result-details">
-                        <span class="result-condition">Grade: ${result.condition}</span>
-                        <span class="result-source">Source: ${result.source}</span>
-                    </div>
-                    <p class="result-description">${result.description}</p>
                 </div>
             `).join('')}
         </div>

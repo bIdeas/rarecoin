@@ -138,6 +138,24 @@
         </aside>
     </div>
 
+    <!-- Console Panel -->
+    <div class="console-panel" id="consolePanel">
+        <div class="console-header">
+            <button class="console-toggle" id="consoleToggle" onclick="coinManager.toggleConsole()">
+                <i class="fas fa-chevron-up"></i>
+                <span>System Console</span>
+            </button>
+        </div>
+        <div class="console-content">
+            <div class="service-statuses" id="serviceStatuses">
+                <!-- Service status indicators will be populated here -->
+            </div>
+            <div class="console-logs" id="consoleContent">
+                <!-- Console logs will be populated here -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modals -->
     <!-- Annotation Edit Modal -->
     <div class="modal" id="annotationModal">
