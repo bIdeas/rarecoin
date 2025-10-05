@@ -520,6 +520,18 @@ class CoinCollectionManager {
                 </div>
             </div>
 
+            <!-- AI Analysis Section -->
+            <div class="analysis-section">
+                <h3 class="section-title">
+                    <i class="fas fa-brain"></i>
+                    AI Analysis
+                    <button class="btn btn-secondary" onclick="reanalyzeWithAI(${coin.id})" style="margin-left: auto; font-size: 0.8rem;">
+                        <i class="fas fa-sync"></i> Re-analyze
+                    </button>
+                </h3>
+                ${this.renderAIAnalysis(coin)}
+            </div>
+
             <!-- Market Research Section -->
             <div class="analysis-section">
                 <h3 class="section-title">
@@ -594,6 +606,134 @@ class CoinCollectionManager {
                 <button class="annotation-remove" onclick="removeAnnotation(${annotation.id})">×</button>
             </div>
         `).join('');
+    }
+
+    renderAIAnalysis(coin) {
+        if (!coin.aiAnalysis || (!coin.aiAnalysis.obverse && !coin.aiAnalysis.reverse)) {
+            return `
+                <div class="ai-analysis-placeholder">
+                    <i class="fas fa-brain" style="font-size: 2rem; opacity: 0.3; margin-bottom: 10px;"></i>
+                    <p>Upload coin images to get AI-powered analysis</p>
+                    <p style="font-size: 0.85rem; opacity: 0.7;">Classification • Feature Detection • Authenticity • Value Estimation</p>
+                </div>
+            `;
+        }
+
+        const renderSideAnalysis = (side, analysis) => {
+            if (!analysis) return '';
+            
+            const sideLabel = side === 'obverse' ? 'Obverse' : 'Reverse';
+            
+            return `
+                <div class="ai-analysis-side">
+                    <h4 class="ai-side-title"><i class="fas fa-${side === 'obverse' ? 'circle' : 'circle-notch'}"></i> ${sideLabel}</h4>
+                    
+                    ${analysis.classification ? `
+                        <div class="ai-result-section">
+                            <div class="ai-result-header">
+                                <i class="fas fa-tag"></i>
+                                <span>Classification</span>
+                            </div>
+                            <div class="ai-predictions">
+                                ${analysis.classification.predictions.slice(0, 3).map(pred => `
+                                    <div class="ai-prediction-item">
+                                        <span class="prediction-label">${pred.label}</span>
+                                        <div class="prediction-bar">
+                                            <div class="prediction-fill" style="width: ${(pred.confidence * 100).toFixed(1)}%"></div>
+                                        </div>
+                                        <span class="prediction-confidence">${(pred.confidence * 100).toFixed(1)}%</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ${analysis.classification.isCoin !== undefined ? `
+                                <div class="ai-coin-detection ${analysis.classification.isCoin ? 'positive' : 'negative'}">
+                                    <i class="fas fa-${analysis.classification.isCoin ? 'check-circle' : 'exclamation-triangle'}"></i>
+                                    ${analysis.classification.isCoin ? 'Coin detected' : 'May not be a coin'}
+                                </div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.features ? `
+                        <div class="ai-result-section">
+                            <div class="ai-result-header">
+                                <i class="fas fa-microscope"></i>
+                                <span>Feature Analysis</span>
+                            </div>
+                            <div class="ai-features-grid">
+                                ${analysis.features.annotations.map(feature => `
+                                    <div class="ai-feature-item rarity-${feature.rarity}">
+                                        <div class="feature-name">${feature.name}</div>
+                                        <div class="feature-confidence">${(feature.confidence * 100).toFixed(0)}%</div>
+                                        <div class="feature-rarity">${feature.rarity} rarity</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.authenticity ? `
+                        <div class="ai-result-section">
+                            <div class="ai-result-header">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Authenticity Check</span>
+                            </div>
+                            <div class="ai-authenticity ${analysis.authenticity.isAuthentic ? 'authentic' : 'suspicious'}">
+                                <div class="authenticity-score">
+                                    <i class="fas fa-${analysis.authenticity.isAuthentic ? 'check-circle' : 'exclamation-triangle'}"></i>
+                                    <span class="score-label">${analysis.authenticity.isAuthentic ? 'Likely Authentic' : 'Needs Verification'}</span>
+                                    <span class="score-value">${(analysis.authenticity.confidence * 100).toFixed(1)}%</span>
+                                </div>
+                                ${analysis.authenticity.warnings && analysis.authenticity.warnings.length > 0 ? `
+                                    <div class="authenticity-warnings">
+                                        ${analysis.authenticity.warnings.map(warning => `
+                                            <div class="warning-item">
+                                                <i class="fas fa-exclamation-circle"></i>
+                                                ${warning}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        };
+
+        return `
+            <div class="ai-analysis-container">
+                ${renderSideAnalysis('obverse', coin.aiAnalysis.obverse)}
+                ${renderSideAnalysis('reverse', coin.aiAnalysis.reverse)}
+                
+                ${coin.aiAnalysis.obverse?.value || coin.aiAnalysis.reverse?.value ? `
+                    <div class="ai-value-estimation">
+                        <div class="ai-result-header">
+                            <i class="fas fa-dollar-sign"></i>
+                            <span>AI Value Estimation</span>
+                        </div>
+                        ${(coin.aiAnalysis.obverse?.value || coin.aiAnalysis.reverse?.value) ? `
+                            <div class="value-estimate">
+                                <div class="estimate-amount">
+                                    $${((coin.aiAnalysis.obverse?.value?.estimatedValue || 0) + (coin.aiAnalysis.reverse?.value?.estimatedValue || 0)).toFixed(2)}
+                                </div>
+                                <div class="estimate-range">
+                                    Range: $${((coin.aiAnalysis.obverse?.value?.range?.min || 0) + (coin.aiAnalysis.reverse?.value?.range?.min || 0)).toFixed(2)} - 
+                                    $${((coin.aiAnalysis.obverse?.value?.range?.max || 0) + (coin.aiAnalysis.reverse?.value?.range?.max || 0)).toFixed(2)}
+                                </div>
+                                <div class="estimate-confidence">
+                                    Confidence: ${(((coin.aiAnalysis.obverse?.value?.confidence || 0) + (coin.aiAnalysis.reverse?.value?.confidence || 0)) / 2 * 100).toFixed(0)}%
+                                </div>
+                                <div class="estimate-disclaimer">
+                                    <i class="fas fa-info-circle"></i>
+                                    AI estimation for reference only. Consult professional appraisers for accurate valuation.
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
     }
 
     renderMediaGallery(coin) {
@@ -908,15 +1048,88 @@ class CoinCollectionManager {
         }
 
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = async (e) => {
             const coin = this.coins.find(c => c.id === coinId);
             if (coin) {
                 coin.images[side] = e.target.result;
+                
+                // Initialize AI analysis storage if not exists
+                if (!coin.aiAnalysis) {
+                    coin.aiAnalysis = { obverse: null, reverse: null };
+                }
+                
                 this.renderCoins();
                 this.saveToStorage();
+                
+                // Trigger AI analysis
+                this.analyzeImage(coinId, side, file);
             }
         };
         reader.readAsDataURL(file);
+    }
+    
+    // AI Analysis
+    async analyzeImage(coinId, side, file) {
+        const coin = this.coins.find(c => c.id === coinId);
+        if (!coin) return;
+        
+        try {
+            // Show loading indicator
+            this.showAIAnalysisLoading(coinId, side);
+            
+            // Import AI orchestrator dynamically
+            const { analyzeCoinImages } = await import('./js/ai-orchestrator.js');
+            
+            // Analyze the image
+            const results = await analyzeCoinImages([file], {
+                classify: true,
+                features: true,
+                authenticity: true,
+                value: true
+            });
+            
+            if (results.success && results.results && results.results.length > 0) {
+                const analysis = results.results[0];
+                
+                // Store analysis results
+                if (!coin.aiAnalysis) {
+                    coin.aiAnalysis = { obverse: null, reverse: null };
+                }
+                coin.aiAnalysis[side] = analysis;
+                
+                this.saveToStorage();
+                this.renderCoins();
+                
+                console.log(`AI Analysis complete for ${side}:`, analysis);
+            }
+        } catch (error) {
+            console.error('AI Analysis failed:', error);
+            this.showAIAnalysisError(coinId, side, error.message);
+        }
+    }
+    
+    showAIAnalysisLoading(coinId, side) {
+        const container = document.getElementById(`ai-analysis-${side}-${coinId}`);
+        if (container) {
+            container.innerHTML = `
+                <div class="ai-analysis-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Analyzing with AI...</span>
+                </div>
+            `;
+        }
+    }
+    
+    showAIAnalysisError(coinId, side, message) {
+        const container = document.getElementById(`ai-analysis-${side}-${coinId}`);
+        if (container) {
+            container.innerHTML = `
+                <div class="ai-analysis-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Analysis failed: ${message}</span>
+                </div>
+            `;
+        }
     }
 
     // Media Management
@@ -1422,6 +1635,33 @@ function clearComparison() {
 
 function exportComparison() {
     coinManager.exportComparison();
+}
+
+// AI Re-analysis
+async function reanalyzeWithAI(coinId) {
+    const coin = coinManager.coins.find(c => c.id === coinId);
+    if (!coin) return;
+
+    try {
+        // Re-analyze both sides if images exist
+        if (coin.images.obverse) {
+            // Convert data URL to File object
+            const obverseBlob = await fetch(coin.images.obverse).then(r => r.blob());
+            const obverseFile = new File([obverseBlob], 'obverse.jpg', { type: 'image/jpeg' });
+            await coinManager.analyzeImage(coinId, 'obverse', obverseFile);
+        }
+        
+        if (coin.images.reverse) {
+            const reverseBlob = await fetch(coin.images.reverse).then(r => r.blob());
+            const reverseFile = new File([reverseBlob], 'reverse.jpg', { type: 'image/jpeg' });
+            await coinManager.analyzeImage(coinId, 'reverse', reverseFile);
+        }
+        
+        console.log('AI re-analysis complete for coin:', coinId);
+    } catch (error) {
+        console.error('AI re-analysis failed:', error);
+        alert('Failed to re-analyze coin. Please try again.');
+    }
 }
 
 // Web Search for Coin Comparison

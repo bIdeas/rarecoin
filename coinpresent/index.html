@@ -7,6 +7,11 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+    
     <script type="module" src="js/app-bootstrap.js" defer></script>
     <script type="module" src="js/market-intel.js" defer></script>
     <script type="module" src="js/ai-orchestrator.js" defer></script>
@@ -181,10 +186,10 @@
                     <div class="form-group">
                         <label>Include:</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" id="includeImages" name="includeImages" checked> Images</label>
-                            <label><input type="checkbox" id="includeAnnotations" name="includeAnnotations" checked> Annotations</label>
-                            <label><input type="checkbox" id="includeValuations" name="includeValuations" checked> Valuations</label>
-                            <label><input type="checkbox" id="includeNotes" name="includeNotes" checked> Notes</label>
+                            <label for="includeImages"><input type="checkbox" id="includeImages" name="includeImages" checked> Images</label>
+                            <label for="includeAnnotations"><input type="checkbox" id="includeAnnotations" name="includeAnnotations" checked> Annotations</label>
+                            <label for="includeValuations"><input type="checkbox" id="includeValuations" name="includeValuations" checked> Valuations</label>
+                            <label for="includeNotes"><input type="checkbox" id="includeNotes" name="includeNotes" checked> Notes</label>
                         </div>
                     </div>
                 </div>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Integration Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .image-upload {
+            margin: 20px 0;
+        }
+        #preview {
+            max-width: 300px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
+    
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 AI Integration Test</h1>
+        
+        <div id="status" class="status info">
+            Initializing...
+        </div>
+        
+        <div class="image-upload">
+            <h3>Test Image Analysis</h3>
+            <label for="imageInput">Select an image to analyze:</label>
+            <input type="file" id="imageInput" name="imageInput" accept="image/*">
+            <img id="preview" style="display:none;" alt="Image preview">
+        </div>
+        
+        <button onclick="testTensorFlow()">Test TensorFlow.js</button>
+        <button onclick="testMobileNet()">Test MobileNet</button>
+        <button onclick="testOfflineModel()">Test Offline Model</button>
+        
+        <div id="results"></div>
+    </div>
+    
+    <script src="js/ai/offlineModel.js"></script>
+    <script>
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        
+        let modelManager = null;
+        let selectedImage = null;
+        
+        // Image upload handler
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    selectedImage = preview;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        async function testTensorFlow() {
+            try {
+                resultsDiv.textContent = 'Testing TensorFlow.js...\n';
+                
+                if (typeof tf === 'undefined') {
+                    throw new Error('TensorFlow.js not loaded');
+                }
+                
+                resultsDiv.textContent += `✓ TensorFlow.js version: ${tf.version.tfjs}\n`;
+                
+                await tf.setBackend('webgl');
+                await tf.ready();
+                
+                resultsDiv.textContent += `✓ Backend: ${tf.getBackend()}\n`;
+                
+                // Test tensor creation
+                const tensor = tf.tensor([1, 2, 3, 4]);
+                resultsDiv.textContent += `✓ Tensor created: ${tensor.shape}\n`;
+                tensor.dispose();
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✓ TensorFlow.js is working!';
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ TensorFlow.js test failed';
+                resultsDiv.textContent += `\nError: ${error.message}`;
+            }
+        }
+        
+        async function testMobileNet() {
+            try {
+                resultsDiv.textContent = 'Testing MobileNet...\n';
+                
+                if (typeof mobilenet === 'undefined') {
+                    throw new Error('MobileNet not loaded');
+                }
+                
+                resultsDiv.textContent += 'Loading MobileNet model...\n';
+                const model = await mobilenet.load();
+                resultsDiv.textContent += '✓ MobileNet loaded successfully\n';
+                
+                if (selectedImage) {
+                    resultsDiv.textContent += '\nAnalyzing image...\n';
+                    const predictions = await model.classify(selectedImage);
+                    resultsDiv.textContent += '\nTop predictions:\n';
+                    predictions.forEach((pred, i) => {
+                        resultsDiv.textContent += `${i + 1}. ${pred.className} (${(pred.probability * 100).toFixed(2)}%)\n`;
+                    });
+                } else {
+                    resultsDiv.textContent += '\n⚠ No image selected. Upload an image to test classification.\n';
+                }
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✓ MobileNet is working!';
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ MobileNet test failed';
+                resultsDiv.textContent += `\nError: ${error.message}`;
+            }
+        }
+        
+        async function testOfflineModel() {
+            try {
+                resultsDiv.textContent = 'Testing Offline Model Manager...\n';
+                
+                if (typeof OfflineModelManager === 'undefined') {
+                    throw new Error('OfflineModelManager not loaded');
+                }
+                
+                modelManager = new OfflineModelManager();
+                resultsDiv.textContent += '✓ OfflineModelManager created\n';
+                
+                resultsDiv.textContent += 'Initializing...\n';
+                const initialized = await modelManager.initialize();
+                
+                if (!initialized) {
+                    throw new Error('Failed to initialize model manager');
+                }
+                
+                resultsDiv.textContent += '✓ Model manager initialized\n';
+                
+                if (selectedImage) {
+                    resultsDiv.textContent += '\nRunning coin classification...\n';
+                    const classResult = await modelManager.classifyCoin(selectedImage);
+                    resultsDiv.textContent += JSON.stringify(classResult, null, 2) + '\n';
+                    
+                    resultsDiv.textContent += '\nDetecting coins...\n';
+                    const detectResult = await modelManager.detectCoins(selectedImage);
+                    resultsDiv.textContent += JSON.stringify(detectResult, null, 2) + '\n';
+                    
+                    resultsDiv.textContent += '\nExtracting features...\n';
+                    const featuresResult = await modelManager.extractFeatures(selectedImage);
+                    resultsDiv.textContent += JSON.stringify(featuresResult, null, 2) + '\n';
+                    
+                    resultsDiv.textContent += '\nVerifying authenticity...\n';
+                    const authResult = await modelManager.verifyAuthenticity(selectedImage);
+                    resultsDiv.textContent += JSON.stringify(authResult, null, 2) + '\n';
+                    
+                    resultsDiv.textContent += '\nEstimating value...\n';
+                    const valueResult = await modelManager.estimateValue(classResult, featuresResult, authResult);
+                    resultsDiv.textContent += JSON.stringify(valueResult, null, 2) + '\n';
+                } else {
+                    resultsDiv.textContent += '\n⚠ No image selected. Upload an image to test full analysis.\n';
+                }
+                
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✓ Offline Model Manager is working!';
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ Offline Model test failed';
+                resultsDiv.textContent += `\nError: ${error.message}\n${error.stack}`;
+            }
+        }
+        
+        // Auto-test on load
+        window.addEventListener('load', async () => {
+            await testTensorFlow();
+        });
+    </script>
+</body>
+</html>
