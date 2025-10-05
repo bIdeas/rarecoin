@@ -689,8 +689,11 @@ export async function initializeOfflineModel() {
             imageElement = await loadImageFromFile(file);
           } else if (file instanceof HTMLImageElement) {
             imageElement = file;
+          } else if (typeof file === 'string' && file.startsWith('data:image/')) {
+            // Handle data URL strings
+            imageElement = await loadImageFromDataURL(file);
           } else {
-            console.warn('Unsupported file type:', file);
+            console.warn('Unsupported file type:', typeof file, file);
             continue;
           }
           
@@ -753,5 +756,17 @@ function loadImageFromFile(file) {
     };
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Helper function to load image from data URL string
+ */
+function loadImageFromDataURL(dataURL) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = dataURL;
   });
 }

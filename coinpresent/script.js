@@ -1250,8 +1250,8 @@ class CoinCollectionManager {
                 
                 this.logToConsole(`${side} image processed and saved`, 'success');
                 
-                // Trigger AI analysis with compressed image
-                this.analyzeImage(coinId, side, file);
+                // Trigger AI analysis with compressed image data URL
+                this.analyzeImage(coinId, side, compressedDataUrl);
             }
         }).catch(error => {
             this.logToConsole(`Failed to process ${side} image: ${error.message}`, 'error');
@@ -1298,7 +1298,7 @@ class CoinCollectionManager {
     }
     
     // AI Analysis
-    async analyzeImage(coinId, side, file) {
+    async analyzeImage(coinId, side, imageData) {
         const coin = this.coins.find(c => c.id === coinId);
         if (!coin) return;
         
@@ -1309,8 +1309,8 @@ class CoinCollectionManager {
             // Import AI orchestrator dynamically
             const { analyzeCoinImages } = await import('./js/ai-orchestrator.js');
             
-            // Analyze the image
-            const results = await analyzeCoinImages([file], {
+            // Analyze the image (imageData can be File object or data URL string)
+            const results = await analyzeCoinImages([imageData], {
                 classify: true,
                 features: true,
                 authenticity: true,
@@ -2060,16 +2060,13 @@ async function reanalyzeWithAI(coinId) {
     try {
         // Re-analyze both sides if images exist
         if (coin.images.obverse) {
-            // Convert data URL to File object
-            const obverseBlob = await fetch(coin.images.obverse).then(r => r.blob());
-            const obverseFile = new File([obverseBlob], 'obverse.jpg', { type: 'image/jpeg' });
-            await coinManager.analyzeImage(coinId, 'obverse', obverseFile);
+            // Use the data URL directly
+            await coinManager.analyzeImage(coinId, 'obverse', coin.images.obverse);
         }
         
         if (coin.images.reverse) {
-            const reverseBlob = await fetch(coin.images.reverse).then(r => r.blob());
-            const reverseFile = new File([reverseBlob], 'reverse.jpg', { type: 'image/jpeg' });
-            await coinManager.analyzeImage(coinId, 'reverse', reverseFile);
+            // Use the data URL directly
+            await coinManager.analyzeImage(coinId, 'reverse', coin.images.reverse);
         }
         
         console.log('AI re-analysis complete for coin:', coinId);
