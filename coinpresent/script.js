@@ -738,6 +738,61 @@ class CoinCollectionManager {
         `;
     }
 
+    // Media filtering and sorting methods
+    applyMediaFilter(mediaList, filter) {
+        if (filter === 'all') {
+            return mediaList;
+        }
+        
+        return mediaList.filter(media => {
+            switch (filter) {
+                case 'featured':
+                    return media.isFeatured === true;
+                case 'ai':
+                    return media.source === 'ai';
+                case 'macro':
+                    return media.tags && media.tags.includes('macro');
+                case 'video':
+                    return media.type === 'video';
+                case 'annotated':
+                    return media.allowAnnotations === true;
+                default:
+                    return true;
+            }
+        });
+    }
+
+    applyMediaSort(mediaList) {
+        const sorted = [...mediaList];
+        
+        switch (this.mediaSortMode) {
+            case 'curated':
+                return sorted.sort((a, b) => {
+                    if (a.isCurated && !b.isCurated) return -1;
+                    if (!a.isCurated && b.isCurated) return 1;
+                    return 0;
+                });
+            case 'chronological':
+                return sorted.sort((a, b) => {
+                    const dateA = a.uploadDate ? new Date(a.uploadDate) : new Date(0);
+                    const dateB = b.uploadDate ? new Date(b.uploadDate) : new Date(0);
+                    return dateB - dateA;
+                });
+            case 'title':
+                return sorted.sort((a, b) => {
+                    const titleA = (a.title || '').toLowerCase();
+                    const titleB = (b.title || '').toLowerCase();
+                    return titleA.localeCompare(titleB);
+                });
+            case 'type':
+                return sorted.sort((a, b) => {
+                    return (a.type || '').localeCompare(b.type || '');
+                });
+            default:
+                return sorted;
+        }
+    }
+
     // Mode Management
     setMode(mode) {
         this.currentMode = mode;
@@ -1723,6 +1778,7 @@ function setMediaSortMode(mode) {
     if (coinManager) {
         coinManager.mediaSortMode = mode;
         coinManager.renderGlobalMediaControls();
+        coinManager.renderCoins();
         coinManager.saveToStorage();
     }
 }
@@ -1731,6 +1787,7 @@ function setMediaFilter(filter) {
     if (coinManager) {
         coinManager.mediaFilter = filter;
         coinManager.renderGlobalMediaControls();
+        coinManager.renderCoins();
         coinManager.saveToStorage();
     }
 }
@@ -1739,6 +1796,7 @@ function setMediaViewMode(mode) {
     if (coinManager) {
         coinManager.mediaViewMode = mode;
         coinManager.renderGlobalMediaControls();
+        coinManager.renderCoins();
         coinManager.saveToStorage();
     }
 }

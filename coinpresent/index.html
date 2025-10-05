@@ -41,8 +41,8 @@
         <!-- Control Panel -->
         <div class="control-panel">
             <div class="mode-selector">
-                <label>Interaction Mode:</label>
-                <div class="mode-buttons">
+                <label for="mode-buttons">Interaction Mode:</label>
+                <div class="mode-buttons" id="mode-buttons">
                     <button class="mode-btn active" data-mode="annotate" onclick="setMode('annotate')">
                         <i class="fas fa-edit"></i> Annotate
                     </button>
@@ -55,8 +55,8 @@
                 </div>
             </div>
             <div class="annotation-tools">
-                <label>Quick Annotations:</label>
-                <div class="annotation-buttons">
+                <label for="annotation-buttons">Quick Annotations:</label>
+                <div class="annotation-buttons" id="annotation-buttons">
                     <button class="annotation-btn" onclick="setQuickAnnotation('Date')">Date</button>
                     <button class="annotation-btn" onclick="setQuickAnnotation('Mintmark')">Mintmark</button>
                     <button class="annotation-btn" onclick="setQuickAnnotation('Obverse')">Obverse</button>
@@ -143,13 +143,13 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Annotation Text:</label>
-                    <input type="text" id="annotationText" placeholder="Enter annotation text">
+                    <label for="annotationText">Annotation Text:</label>
+                    <input type="text" id="annotationText" name="annotationText" placeholder="Enter annotation text">
                 </div>
                 <div class="form-group">
-                    <label>Color:</label>
+                    <label for="annotationColor">Color:</label>
                     <div class="color-picker">
-                        <input type="color" id="annotationColor" value="#f97316">
+                        <input type="color" id="annotationColor" name="annotationColor" value="#f97316">
                     </div>
                 </div>
             </div>
@@ -170,8 +170,8 @@
             <div class="modal-body">
                 <div class="export-options">
                     <div class="form-group">
-                        <label>Export Format:</label>
-                        <select id="exportFormat">
+                        <label for="exportFormat">Export Format:</label>
+                        <select id="exportFormat" name="exportFormat">
                             <option value="json">JSON Data</option>
                             <option value="csv">CSV Spreadsheet</option>
                             <option value="html">HTML Report</option>
@@ -181,10 +181,10 @@
                     <div class="form-group">
                         <label>Include:</label>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" checked> Images</label>
-                            <label><input type="checkbox" checked> Annotations</label>
-                            <label><input type="checkbox" checked> Valuations</label>
-                            <label><input type="checkbox" checked> Notes</label>
+                            <label><input type="checkbox" id="includeImages" name="includeImages" checked> Images</label>
+                            <label><input type="checkbox" id="includeAnnotations" name="includeAnnotations" checked> Annotations</label>
+                            <label><input type="checkbox" id="includeValuations" name="includeValuations" checked> Valuations</label>
+                            <label><input type="checkbox" id="includeNotes" name="includeNotes" checked> Notes</label>
                         </div>
                     </div>
                 </div>
