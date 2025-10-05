@@ -107,10 +107,7 @@ class CoinCollectionManager {
                 reverse: null
             },
             media: {
-                images: isSample ? [
-                    { id: 'img1', type: 'image', url: null, title: 'Obverse Detail', description: 'Main obverse view' },
-                    { id: 'img2', type: 'image', url: null, title: 'Reverse Detail', description: 'Main reverse view' }
-                ] : [],
+                images: [],
                 videos: []
             },
             annotations: {
@@ -678,6 +675,11 @@ class CoinCollectionManager {
             media.source === 'ai' ? '<span class="media-badge ai">AI</span>' : '',
             media.source === 'market' ? '<span class="media-badge market">Market</span>' : ''
         ].filter(Boolean).join('');
+
+        // Skip rendering if media URL is null or undefined
+        if (!media.url) {
+            return '';
+        }
 
         return `
             <div class="media-item" data-media-id="${media.id}" data-type="${media.type}" data-source="${media.source || 'manual'}">
