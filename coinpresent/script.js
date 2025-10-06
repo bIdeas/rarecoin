@@ -450,7 +450,7 @@ class CoinCollectionManager {
                             <span>Click or drag to upload obverse image</span>
                         </div>`
                     }
-                    <input type="file" id="obverse_${coin.id}" class="file-input" accept="image/*" onchange="handleImageUpload(${coin.id}, 'obverse', this)">
+                    <input type="file" id="obverse_${coin.id}" name="obverse_${coin.id}" class="file-input" accept="image/*" onchange="handleImageUpload(${coin.id}, 'obverse', this)">
                     <div class="annotation-overlay" onclick="handleImageClick(event, ${coin.id}, 'obverse')">
                         ${this.renderAnnotations(coin.annotations.obverse)}
                     </div>
@@ -482,7 +482,7 @@ class CoinCollectionManager {
                             <span>Click or drag to upload reverse image</span>
                         </div>`
                     }
-                    <input type="file" id="reverse_${coin.id}" class="file-input" accept="image/*" onchange="handleImageUpload(${coin.id}, 'reverse', this)">
+                    <input type="file" id="reverse_${coin.id}" name="reverse_${coin.id}" class="file-input" accept="image/*" onchange="handleImageUpload(${coin.id}, 'reverse', this)">
                     <div class="annotation-overlay" onclick="handleImageClick(event, ${coin.id}, 'reverse')">
                         ${this.renderAnnotations(coin.annotations.reverse)}
                     </div>
@@ -497,28 +497,28 @@ class CoinCollectionManager {
                 </h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Title</label>
-                        <input type="text" class="form-input" value="${coin.title}" 
+                        <label for="title_${coin.id}">Title</label>
+                        <input type="text" id="title_${coin.id}" name="title_${coin.id}" class="form-input" value="${coin.title}" 
                                onchange="updateCoinField(${coin.id}, 'title', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Country</label>
-                        <input type="text" class="form-input" value="${coin.metadata.country}" 
+                        <label for="country_${coin.id}">Country</label>
+                        <input type="text" id="country_${coin.id}" name="country_${coin.id}" class="form-input" value="${coin.metadata.country}" 
                                onchange="updateCoinMetadata(${coin.id}, 'country', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Year</label>
-                        <input type="text" class="form-input" value="${coin.metadata.year}" 
+                        <label for="year_${coin.id}">Year</label>
+                        <input type="text" id="year_${coin.id}" name="year_${coin.id}" class="form-input" value="${coin.metadata.year}" 
                                onchange="updateCoinMetadata(${coin.id}, 'year', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Denomination</label>
-                        <input type="text" class="form-input" value="${coin.metadata.denomination}" 
+                        <label for="denomination_${coin.id}">Denomination</label>
+                        <input type="text" id="denomination_${coin.id}" name="denomination_${coin.id}" class="form-input" value="${coin.metadata.denomination}" 
                                onchange="updateCoinMetadata(${coin.id}, 'denomination', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Metal</label>
-                        <select class="form-input" onchange="updateCoinMetadata(${coin.id}, 'metal', this.value)">
+                        <label for="metal_${coin.id}">Metal</label>
+                        <select id="metal_${coin.id}" name="metal_${coin.id}" class="form-input" onchange="updateCoinMetadata(${coin.id}, 'metal', this.value)">
                             <option value="">Select Metal</option>
                             <option value="Gold" ${coin.metadata.metal === 'Gold' ? 'selected' : ''}>Gold</option>
                             <option value="Silver" ${coin.metadata.metal === 'Silver' ? 'selected' : ''}>Silver</option>
@@ -532,23 +532,23 @@ class CoinCollectionManager {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Diameter (mm)</label>
-                        <input type="number" step="0.1" class="form-input" value="${coin.metadata.diameter}" 
+                        <label for="diameter_${coin.id}">Diameter (mm)</label>
+                        <input type="number" step="0.1" id="diameter_${coin.id}" name="diameter_${coin.id}" class="form-input" value="${coin.metadata.diameter}" 
                                onchange="updateCoinMetadata(${coin.id}, 'diameter', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Weight (g)</label>
-                        <input type="number" step="0.01" class="form-input" value="${coin.metadata.weight}" 
+                        <label for="weight_${coin.id}">Weight (g)</label>
+                        <input type="number" step="0.01" id="weight_${coin.id}" name="weight_${coin.id}" class="form-input" value="${coin.metadata.weight}" 
                                onchange="updateCoinMetadata(${coin.id}, 'weight', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Mintmark</label>
-                        <input type="text" class="form-input" value="${coin.metadata.mintmark}" 
+                        <label for="mintmark_${coin.id}">Mintmark</label>
+                        <input type="text" id="mintmark_${coin.id}" name="mintmark_${coin.id}" class="form-input" value="${coin.metadata.mintmark}" 
                                onchange="updateCoinMetadata(${coin.id}, 'mintmark', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Edge Type</label>
-                        <select class="form-input" onchange="updateCoinMetadata(${coin.id}, 'edge', this.value)">
+                        <label for="edge_${coin.id}">Edge Type</label>
+                        <select id="edge_${coin.id}" name="edge_${coin.id}" class="form-input" onchange="updateCoinMetadata(${coin.id}, 'edge', this.value)">
                             <option value="">Select Edge Type</option>
                             <option value="Plain" ${coin.metadata.edge === 'Plain' ? 'selected' : ''}>Plain</option>
                             <option value="Reeded" ${coin.metadata.edge === 'Reeded' ? 'selected' : ''}>Reeded</option>
@@ -558,8 +558,8 @@ class CoinCollectionManager {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Mintage</label>
-                        <input type="text" class="form-input" value="${coin.metadata.mintage}" 
+                        <label for="mintage_${coin.id}">Mintage</label>
+                        <input type="text" id="mintage_${coin.id}" name="mintage_${coin.id}" class="form-input" value="${coin.metadata.mintage}" 
                                onchange="updateCoinMetadata(${coin.id}, 'mintage', this.value)">
                     </div>
                 </div>
@@ -573,8 +573,8 @@ class CoinCollectionManager {
                 </h3>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Grade</label>
-                        <select class="form-input" onchange="updateCoinCondition(${coin.id}, 'grade', this.value)">
+                        <label for="grade_${coin.id}">Grade</label>
+                        <select id="grade_${coin.id}" name="grade_${coin.id}" class="form-input" onchange="updateCoinCondition(${coin.id}, 'grade', this.value)">
                             <option value="">Select Grade</option>
                             <option value="PR-70" ${coin.condition.grade === 'PR-70' ? 'selected' : ''}>PR-70 (Perfect Proof)</option>
                             <option value="PR-69" ${coin.condition.grade === 'PR-69' ? 'selected' : ''}>PR-69 (Ultra Cameo)</option>
@@ -610,8 +610,8 @@ class CoinCollectionManager {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Wear Assessment</label>
-                        <select class="form-input" onchange="updateCoinCondition(${coin.id}, 'wear', this.value)">
+                        <label for="wear_${coin.id}">Wear Assessment</label>
+                        <select id="wear_${coin.id}" name="wear_${coin.id}" class="form-input" onchange="updateCoinCondition(${coin.id}, 'wear', this.value)">
                             <option value="">Select Wear Level</option>
                             <option value="None" ${coin.condition.wear === 'None' ? 'selected' : ''}>No Wear (Mint State)</option>
                             <option value="Minimal" ${coin.condition.wear === 'Minimal' ? 'selected' : ''}>Minimal Wear</option>
@@ -622,8 +622,8 @@ class CoinCollectionManager {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Luster</label>
-                        <select class="form-input" onchange="updateCoinCondition(${coin.id}, 'luster', this.value)">
+                        <label for="luster_${coin.id}">Luster</label>
+                        <select id="luster_${coin.id}" name="luster_${coin.id}" class="form-input" onchange="updateCoinCondition(${coin.id}, 'luster', this.value)">
                             <option value="">Select Luster</option>
                             <option value="Full" ${coin.condition.luster === 'Full' ? 'selected' : ''}>Full Original Luster</option>
                             <option value="Partial" ${coin.condition.luster === 'Partial' ? 'selected' : ''}>Partial Luster</option>
@@ -632,8 +632,8 @@ class CoinCollectionManager {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Strike Quality</label>
-                        <select class="form-input" onchange="updateCoinCondition(${coin.id}, 'strike', this.value)">
+                        <label for="strike_${coin.id}">Strike Quality</label>
+                        <select id="strike_${coin.id}" name="strike_${coin.id}" class="form-input" onchange="updateCoinCondition(${coin.id}, 'strike', this.value)">
                             <option value="">Select Strike</option>
                             <option value="Full" ${coin.condition.strike === 'Full' ? 'selected' : ''}>Full Strike</option>
                             <option value="Sharp" ${coin.condition.strike === 'Sharp' ? 'selected' : ''}>Sharp Strike</option>
@@ -662,9 +662,9 @@ class CoinCollectionManager {
                         <div class="scenario-range">$${coin.valuation.scenarios.common.min} - $${coin.valuation.scenarios.common.max}</div>
                         <div class="scenario-description">${coin.valuation.scenarios.common.description}</div>
                         <div class="mt-4">
-                            <input type="number" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.common.min}" 
+                            <input type="number" id="common_min_${coin.id}" name="common_min_${coin.id}" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.common.min}" 
                                    onchange="updateValuationScenario(${coin.id}, 'common', 'min', this.value)" style="width: 80px; display: inline-block; margin-right: 8px;">
-                            <input type="number" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.common.max}" 
+                            <input type="number" id="common_max_${coin.id}" name="common_max_${coin.id}" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.common.max}" 
                                    onchange="updateValuationScenario(${coin.id}, 'common', 'max', this.value)" style="width: 80px; display: inline-block;">
                         </div>
                     </div>
@@ -673,9 +673,9 @@ class CoinCollectionManager {
                         <div class="scenario-range">$${coin.valuation.scenarios.silver.min} - $${coin.valuation.scenarios.silver.max}</div>
                         <div class="scenario-description">${coin.valuation.scenarios.silver.description}</div>
                         <div class="mt-4">
-                            <input type="number" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.silver.min}" 
+                            <input type="number" id="silver_min_${coin.id}" name="silver_min_${coin.id}" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.silver.min}" 
                                    onchange="updateValuationScenario(${coin.id}, 'silver', 'min', this.value)" style="width: 80px; display: inline-block; margin-right: 8px;">
-                            <input type="number" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.silver.max}" 
+                            <input type="number" id="silver_max_${coin.id}" name="silver_max_${coin.id}" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.silver.max}" 
                                    onchange="updateValuationScenario(${coin.id}, 'silver', 'max', this.value)" style="width: 80px; display: inline-block;">
                         </div>
                     </div>
@@ -684,22 +684,22 @@ class CoinCollectionManager {
                         <div class="scenario-range">$${coin.valuation.scenarios.collectible.min} - $${coin.valuation.scenarios.collectible.max}+</div>
                         <div class="scenario-description">${coin.valuation.scenarios.collectible.description}</div>
                         <div class="mt-4">
-                            <input type="number" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.collectible.min}" 
+                            <input type="number" id="collectible_min_${coin.id}" name="collectible_min_${coin.id}" class="form-input" placeholder="Min" value="${coin.valuation.scenarios.collectible.min}" 
                                    onchange="updateValuationScenario(${coin.id}, 'collectible', 'min', this.value)" style="width: 80px; display: inline-block; margin-right: 8px;">
-                            <input type="number" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.collectible.max}" 
+                            <input type="number" id="collectible_max_${coin.id}" name="collectible_max_${coin.id}" class="form-input" placeholder="Max" value="${coin.valuation.scenarios.collectible.max}" 
                                    onchange="updateValuationScenario(${coin.id}, 'collectible', 'max', this.value)" style="width: 80px; display: inline-block;">
                         </div>
                     </div>
                 </div>
                 <div class="form-grid mt-4">
                     <div class="form-group">
-                        <label>Current Market Estimate</label>
-                        <input type="text" class="form-input" placeholder="$0 - $0" value="${coin.valuation.currentEstimate}" 
+                        <label for="current_estimate_${coin.id}">Current Market Estimate</label>
+                        <input type="text" id="current_estimate_${coin.id}" name="current_estimate_${coin.id}" class="form-input" placeholder="$0 - $0" value="${coin.valuation.currentEstimate}" 
                                onchange="updateCoinValuation(${coin.id}, 'currentEstimate', this.value)">
                     </div>
                     <div class="form-group">
-                        <label>Market Notes</label>
-                        <textarea class="form-input" placeholder="Market trends, recent sales, auction results, etc." 
+                        <label for="market_notes_${coin.id}">Market Notes</label>
+                        <textarea id="market_notes_${coin.id}" name="market_notes_${coin.id}" class="form-input" placeholder="Market trends, recent sales, auction results, etc." 
                                   onchange="updateCoinValuation(${coin.id}, 'marketNotes', this.value)">${coin.valuation.marketNotes}</textarea>
                     </div>
                 </div>
@@ -748,7 +748,7 @@ class CoinCollectionManager {
                 </div>
                 <div id="mediaUpload_${coin.id}" class="media-upload-panel" style="display: none;">
                     <div class="upload-options">
-                        <input type="file" id="mediaFile_${coin.id}" multiple accept="image/*,video/*" onchange="handleMediaUpload(${coin.id}, this)" style="display: none;">
+                        <input type="file" id="mediaFile_${coin.id}" name="mediaFile_${coin.id}" multiple accept="image/*,video/*" onchange="handleMediaUpload(${coin.id}, this)" style="display: none;">
                         <div class="upload-actions">
                             <button class="btn btn-outline" onclick="document.getElementById('mediaFile_${coin.id}').click()">
                                 <i class="fas fa-upload"></i> Select Files
@@ -1025,7 +1025,7 @@ class CoinCollectionManager {
                 </div>
                 <div class="media-info">
                     <div class="media-info-header">
-                        <input type="text" class="media-title" value="${media.title}" placeholder="Media title"
+                        <input type="text" id="media_title_${coin.id}_${media.id}" name="media_title_${coin.id}_${media.id}" class="media-title" value="${media.title}" placeholder="Media title"
                                onchange="updateMediaTitle(${coin.id}, '${media.id}', this.value)">
                         <div class="media-tag-list">
                             ${mediaTags.map(tag => `<span class="media-tag">${tag}</span>`).join('')}
@@ -1034,15 +1034,15 @@ class CoinCollectionManager {
                             </button>
                         </div>
                     </div>
-                    <textarea class="media-description" placeholder="Description"
+                    <textarea id="media_description_${coin.id}_${media.id}" name="media_description_${coin.id}_${media.id}" class="media-description" placeholder="Description"
                               onchange="updateMediaDescription(${coin.id}, '${media.id}', this.value)">${media.description || ''}</textarea>
                     <div class="media-properties">
                         <label class="media-checkbox">
-                            <input type="checkbox" ${media.isCurated ? 'checked' : ''} onchange="toggleMediaCurated(${coin.id}, '${media.id}', this.checked)">
+                            <input type="checkbox" id="media_curated_${coin.id}_${media.id}" name="media_curated_${coin.id}_${media.id}" ${media.isCurated ? 'checked' : ''} onchange="toggleMediaCurated(${coin.id}, '${media.id}', this.checked)">
                             <span>Curate into spotlight</span>
                         </label>
                         <label class="media-checkbox">
-                            <input type="checkbox" ${media.allowAnnotations || false ? 'checked' : ''} onchange="toggleMediaAnnotations(${coin.id}, '${media.id}', this.checked)">
+                            <input type="checkbox" id="media_annotations_${coin.id}_${media.id}" name="media_annotations_${coin.id}_${media.id}" ${media.allowAnnotations || false ? 'checked' : ''} onchange="toggleMediaAnnotations(${coin.id}, '${media.id}', this.checked)">
                             <span>Enable micro-annotations</span>
                         </label>
                     </div>
