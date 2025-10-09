@@ -16,6 +16,9 @@ class CoinCollectionManager {
         this.mediaViewMode = 'masonry';
         this.mediaFilter = 'all';
         
+        // Performance optimization
+        this.renderTimeout = null;
+        
         // Console and logging system
         this.consoleExpanded = false;
         this.consoleLogs = [];
@@ -365,32 +368,35 @@ class CoinCollectionManager {
 
     // Rendering
     renderCoins() {
-        const container = document.getElementById('coinsContainer');
-        container.innerHTML = this.coins.map(coin => this.renderCoinCard(coin)).join('');
+        // Throttle rendering to prevent excessive re-renders
+        if (this.renderTimeout) {
+            clearTimeout(this.renderTimeout);
+        }
         
-        // Apply expanded states after rendering
-        this.expandedCoins.forEach(coinId => {
-            const coinCard = document.querySelector(`[data-coin-id="${coinId}"]`);
-            if (coinCard) {
-                coinCard.classList.add('expanded');
-                const content = document.getElementById(`coinContent_${coinId}`);
-                if (content) content.style.display = 'block';
-                const chevron = coinCard.querySelector('.fa-chevron-down');
-                if (chevron) chevron.style.transform = 'rotate(180deg)';
-            }
-        });
-        
-        // Debug: Check if file inputs are created correctly
-        const fileInputs = container.querySelectorAll('.file-input');
-        console.log('File inputs created:', fileInputs.length);
-        fileInputs.forEach((input, index) => {
-            console.log(`File input ${index}:`, {
-                id: input.id,
-                name: input.name,
-                accept: input.accept,
-                onchange: !!input.onchange
+        this.renderTimeout = setTimeout(() => {
+            const container = document.getElementById('coinsContainer');
+            if (!container) return;
+            
+            container.innerHTML = this.coins.map(coin => this.renderCoinCard(coin)).join('');
+            
+            // Apply expanded states after rendering
+            this.expandedCoins.forEach(coinId => {
+                const coinCard = document.querySelector(`[data-coin-id="${coinId}"]`);
+                if (coinCard) {
+                    coinCard.classList.add('expanded');
+                    const content = document.getElementById(`coinContent_${coinId}`);
+                    if (content) content.style.display = 'block';
+                    const chevron = coinCard.querySelector('.fa-chevron-down');
+                    if (chevron) chevron.style.transform = 'rotate(180deg)';
+                }
             });
-        });
+            
+            // Debug: Check if file inputs are created correctly (only in debug mode)
+            if (window.location.search.includes('debug=true')) {
+                const fileInputs = container.querySelectorAll('.file-input');
+                console.log('File inputs created:', fileInputs.length);
+            }
+        }, 100); // 100ms throttle
     }
 
     renderCoinCard(coin) {
@@ -1236,15 +1242,10 @@ class CoinCollectionManager {
 
     // Image Management
     handleImageUpload(coinId, side, fileInput) {
-        console.log('handleImageUpload called:', { coinId, side, fileInput });
-        
         const file = fileInput.files[0];
         if (!file) {
-            console.log('No file selected');
             return;
         }
-
-        console.log('File selected:', { name: file.name, type: file.type, size: file.size });
 
         // Ensure file is an image for main coin images
         if (!file.type.startsWith('image/')) {
@@ -1256,9 +1257,8 @@ class CoinCollectionManager {
 
         this.logToConsole(`Processing ${side} image for coin ${coinId}... (${file.name}, ${(file.size/1024).toFixed(1)}KB)`, 'info');
         
-        // Compress and resize image to save storage space
-        this.compressImage(file, 800, 0.8).then(compressedDataUrl => {
-            console.log('Image compressed successfully, size:', compressedDataUrl.length);
+        // Compress and resize image to save storage space (reduce size for better performance)
+        this.compressImage(file, 600, 0.7).then(compressedDataUrl => {
             
             const coin = this.coins.find(c => c.id === coinId);
             if (coin) {
@@ -1277,19 +1277,16 @@ class CoinCollectionManager {
                 // Trigger AI analysis with compressed image data URL
                 this.analyzeImage(coinId, side, compressedDataUrl);
             } else {
-                console.error('Coin not found:', coinId);
                 this.logToConsole(`Error: Coin ${coinId} not found`, 'error');
             }
         }).catch(error => {
             this.logToConsole(`Failed to process ${side} image: ${error.message}`, 'error');
-            console.error('Image compression failed:', error);
             alert(`Failed to process image: ${error.message}`);
         });
     }
     
     // Compress image to reduce storage usage
-    compressImage(file, maxWidth = 800, quality = 0.8) {
-        console.log('Starting image compression:', { fileName: file.name, fileSize: file.size, maxWidth, quality });
+    compressImage(file, maxWidth = 600, quality = 0.7) {
         
         return new Promise((resolve, reject) => {
             const canvas = document.createElement('canvas');
@@ -1297,16 +1294,12 @@ class CoinCollectionManager {
             const img = new Image();
             
             img.onload = () => {
-                console.log('Image loaded for compression:', { originalWidth: img.width, originalHeight: img.height });
-                
                 // Calculate new dimensions
                 let { width, height } = img;
                 if (width > maxWidth) {
                     height = (height * maxWidth) / width;
                     width = maxWidth;
                 }
-                
-                console.log('Calculated new dimensions:', { width, height });
                 
                 canvas.width = width;
                 canvas.height = height;
@@ -1317,11 +1310,9 @@ class CoinCollectionManager {
                 // Convert to compressed data URL
                 const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
                 
-                // Check size reduction
+                // Check size reduction (only log if significant compression achieved)
                 const originalSize = file.size;
                 const compressedSize = Math.round((compressedDataUrl.length * 3) / 4); // Approximate size
-                
-                console.log(`Image compressed: ${Math.round(originalSize/1024)}KB → ${Math.round(compressedSize/1024)}KB`);
                 
                 // Clean up object URL
                 URL.revokeObjectURL(img.src);
@@ -1330,16 +1321,13 @@ class CoinCollectionManager {
             };
             
             img.onerror = (error) => {
-                console.error('Image load error:', error);
                 URL.revokeObjectURL(img.src);
                 reject(new Error('Failed to load image for compression'));
             };
             
             try {
                 img.src = URL.createObjectURL(file);
-                console.log('Created object URL for image:', img.src);
             } catch (error) {
-                console.error('Failed to create object URL:', error);
                 reject(new Error('Failed to create object URL for image'));
             }
         });
@@ -1375,13 +1363,24 @@ class CoinCollectionManager {
                 coin.aiAnalysis[side] = analysis;
                 
                 this.saveToStorage();
-                this.renderCoins();
+                // Don't re-render entire coins, just update the AI analysis display
+                this.updateAIAnalysisDisplay(coinId, side, analysis);
                 
-                console.log(`AI Analysis complete for ${side}:`, analysis);
+                if (window.location.search.includes('debug=true')) {
+                    console.log(`AI Analysis complete for ${side}:`, analysis);
+                }
             }
         } catch (error) {
             console.error('AI Analysis failed:', error);
             this.showAIAnalysisError(coinId, side, error.message);
+        }
+    }
+    
+    updateAIAnalysisDisplay(coinId, side, analysis) {
+        const container = document.getElementById(`ai-analysis-${side}-${coinId}`);
+        if (container && analysis) {
+            // Update just the AI analysis section without re-rendering everything
+            container.innerHTML = this.renderAIAnalysis(analysis);
         }
     }
     
@@ -1729,7 +1728,9 @@ class CoinCollectionManager {
 
     // Storage Management
     async saveToStorage() {
-        console.log('saveToStorage called, coins count:', this.coins.length);
+        if (window.location.search.includes('debug=true')) {
+            console.log('saveToStorage called, coins count:', this.coins.length);
+        }
         try {
             // Check storage quota before saving
             const dataToSave = JSON.stringify(this.coins);
@@ -1743,7 +1744,9 @@ class CoinCollectionManager {
             const estimatedSize = (dataToSave.length + metaToSave.length) * 2; // UTF-16 encoding
             const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
             
-            console.log('Storage size estimate:', { sizeMB, estimatedSize });
+            if (window.location.search.includes('debug=true')) {
+                console.log('Storage size estimate:', { sizeMB, estimatedSize });
+            }
             
             // Check if we're approaching localStorage limit (usually 5-10MB)
             if (estimatedSize > 4 * 1024 * 1024) { // 4MB threshold
@@ -1755,7 +1758,9 @@ class CoinCollectionManager {
             localStorage.setItem('coinCollection', dataToSave);
             localStorage.setItem('coinCollectionMeta', metaToSave);
             
-            console.log('Data saved to localStorage successfully');
+            if (window.location.search.includes('debug=true')) {
+                console.log('Data saved to localStorage successfully');
+            }
             this.logToConsole(`Storage saved successfully (${sizeMB}MB)`, 'success');
             this.updateStorageStatus(estimatedSize);
         } catch (error) {
@@ -1988,7 +1993,9 @@ function setQuickAnnotation(type) {
 }
 
 function handleImageUpload(coinId, side, input) {
-    console.log('Global handleImageUpload called:', { coinId, side, input });
+    if (window.location.search.includes('debug=true')) {
+        console.log('Global handleImageUpload called:', { coinId, side, input });
+    }
     if (!coinManager) {
         console.error('coinManager not initialized');
         return;
@@ -2126,7 +2133,9 @@ async function reanalyzeWithAI(coinId) {
             await coinManager.analyzeImage(coinId, 'reverse', coin.images.reverse);
         }
         
-        console.log('AI re-analysis complete for coin:', coinId);
+        if (window.location.search.includes('debug=true')) {
+            console.log('AI re-analysis complete for coin:', coinId);
+        }
     } catch (error) {
         console.error('AI re-analysis failed:', error);
         alert('Failed to re-analyze coin. Please try again.');
@@ -2176,8 +2185,8 @@ async function simulateWebSearch(query, coin) {
             price: `$${Math.round(basePrice * (0.8 + Math.random() * 0.4))}`,
             condition: 'MS-65',
             source: 'Heritage Auctions',
-            url: `https://coins.ha.com/search?q=${encodeURIComponent(query)}`,
-            image: 'https://via.placeholder.com/120x120/8B4513/FFFFFF?text=Coin',
+            url: `https://coins.ha.com/search?q=${encodeURIComponent(coin.metadata.year + ' ' + coin.metadata.country + ' ' + coin.metadata.denomination)}`,
+            image: null, // Remove placeholder images to improve performance
             description: `Certified ${coin.metadata.denomination} in excellent condition. Well-struck example with original luster.`,
             soldDate: '2024-01-15'
         },
@@ -2186,8 +2195,8 @@ async function simulateWebSearch(query, coin) {
             price: `$${Math.round(basePrice * (0.6 + Math.random() * 0.8))}`,
             condition: 'AU-58',
             source: 'eBay',
-            url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(query)}`,
-            image: 'https://via.placeholder.com/120x120/DAA520/FFFFFF?text=eBay',
+            url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(coin.metadata.year + ' ' + coin.metadata.denomination + ' coin')}`,
+            image: null, // Remove placeholder images to improve performance
             description: `PCGS certified coin with minimal wear. Popular collector item.`,
             soldDate: '2024-02-03'
         },
@@ -2196,8 +2205,8 @@ async function simulateWebSearch(query, coin) {
             price: `$${Math.round(basePrice * (0.9 + Math.random() * 0.2))} - $${Math.round(basePrice * (1.1 + Math.random() * 0.3))}`,
             condition: 'Various',
             source: 'PCGS Price Guide',
-            url: `https://www.pcgs.com/prices`,
-            image: 'https://via.placeholder.com/120x120/228B22/FFFFFF?text=PCGS',
+            url: `https://www.pcgs.com/prices/${encodeURIComponent(coin.metadata.country.toLowerCase().replace(' ', '-'))}-coins`,
+            image: null, // Remove placeholder images to improve performance
             description: `Current market values for ${coin.metadata.denomination} coins in various grades.`,
             soldDate: 'Current'
         },
@@ -2206,8 +2215,8 @@ async function simulateWebSearch(query, coin) {
             price: `$${Math.round(basePrice * (1.1 + Math.random() * 0.4))}`,
             condition: 'MS-64',
             source: 'Stack\'s Bowers',
-            url: `https://www.stacksbowers.com/search?q=${encodeURIComponent(query)}`,
-            image: 'https://via.placeholder.com/120x120/A0522D/FFFFFF?text=SB',
+            url: `https://www.stacksbowers.com/search?q=${encodeURIComponent(coin.metadata.year + ' ' + coin.metadata.denomination)}`,
+            image: null, // Remove placeholder images to improve performance
             description: `Professional numismatic auction house. Includes full provenance and detailed imagery.`,
             soldDate: '2024-01-28'
         },
@@ -2267,7 +2276,10 @@ function displaySearchResults(coinId, results) {
                 <div class="search-result-item" onclick="window.open('${result.url}', '_blank')">
                     <div class="result-content">
                         <div class="result-image">
-                            <img src="${result.image}" alt="Coin" onerror="this.src='https://via.placeholder.com/120x120/666/FFF?text=No+Image'">
+                            ${result.image ? 
+                                `<img src="${result.image}" alt="Coin" onerror="this.style.display='none'">` : 
+                                `<div class="no-image-placeholder"><i class="fas fa-coins"></i></div>`
+                            }
                         </div>
                         <div class="result-info">
                             <div class="result-header">
@@ -2531,16 +2543,22 @@ function handleDrop(event, coinId) {
 }
 
 function handleMainImageDrop(event, coinId, side) {
-    console.log('handleMainImageDrop called:', { coinId, side });
+    if (window.location.search.includes('debug=true')) {
+        console.log('handleMainImageDrop called:', { coinId, side });
+    }
     event.preventDefault();
     event.currentTarget.classList.remove('drag-over', 'drag-enter');
     
     const files = event.dataTransfer.files;
-    console.log('Files dropped:', files.length);
+    if (window.location.search.includes('debug=true')) {
+        console.log('Files dropped:', files.length);
+    }
     
     if (files.length > 0) {
         const file = files[0]; // Only take the first file for main images
-        console.log('Processing dropped file:', { name: file.name, type: file.type, size: file.size });
+        if (window.location.search.includes('debug=true')) {
+            console.log('Processing dropped file:', { name: file.name, type: file.type, size: file.size });
+        }
         
         if (file.type.startsWith('image/')) {
             const mockInput = {
@@ -2548,7 +2566,9 @@ function handleMainImageDrop(event, coinId, side) {
             };
             coinManager.handleImageUpload(coinId, side, mockInput);
         } else {
-            console.log('Dropped file is not an image:', file.type);
+            if (window.location.search.includes('debug=true')) {
+                console.log('Dropped file is not an image:', file.type);
+            }
             alert('Please drop an image file.');
         }
     }
@@ -2575,9 +2595,11 @@ function setMediaFilter(filter) {
 
 // Test function to debug image upload issues
 function testImageUpload() {
-    console.log('=== IMAGE UPLOAD TEST ===');
-    console.log('coinManager exists:', !!coinManager);
-    console.log('coins count:', coinManager ? coinManager.coins.length : 'N/A');
+    if (window.location.search.includes('debug=true')) {
+        console.log('=== IMAGE UPLOAD TEST ===');
+        console.log('coinManager exists:', !!coinManager);
+        console.log('coins count:', coinManager ? coinManager.coins.length : 'N/A');
+    }
     
     if (!coinManager || coinManager.coins.length === 0) {
         alert('Please add a coin first before testing image upload');
@@ -2585,7 +2607,9 @@ function testImageUpload() {
     }
     
     const firstCoin = coinManager.coins[0];
-    console.log('Testing with coin:', firstCoin.id, firstCoin.title);
+    if (window.location.search.includes('debug=true')) {
+        console.log('Testing with coin:', firstCoin.id, firstCoin.title);
+    }
     
     // Create a test file input
     const testInput = document.createElement('input');
@@ -2594,9 +2618,13 @@ function testImageUpload() {
     testInput.style.display = 'none';
     
     testInput.onchange = function(e) {
-        console.log('Test file selected:', e.target.files[0]);
+        if (window.location.search.includes('debug=true')) {
+            console.log('Test file selected:', e.target.files[0]);
+        }
         if (e.target.files[0]) {
-            console.log('Calling handleImageUpload with test file...');
+            if (window.location.search.includes('debug=true')) {
+                console.log('Calling handleImageUpload with test file...');
+            }
             handleImageUpload(firstCoin.id, 'obverse', e.target);
         }
         document.body.removeChild(testInput);
@@ -2605,7 +2633,9 @@ function testImageUpload() {
     document.body.appendChild(testInput);
     testInput.click();
     
-    console.log('Test file dialog opened');
+    if (window.location.search.includes('debug=true')) {
+        console.log('Test file dialog opened');
+    }
 }
 
 function setMediaViewMode(mode) {
