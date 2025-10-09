@@ -379,6 +379,18 @@ class CoinCollectionManager {
                 if (chevron) chevron.style.transform = 'rotate(180deg)';
             }
         });
+        
+        // Debug: Check if file inputs are created correctly
+        const fileInputs = container.querySelectorAll('.file-input');
+        console.log('File inputs created:', fileInputs.length);
+        fileInputs.forEach((input, index) => {
+            console.log(`File input ${index}:`, {
+                id: input.id,
+                name: input.name,
+                accept: input.accept,
+                onchange: !!input.onchange
+            });
+        });
     }
 
     renderCoinCard(coin) {
@@ -644,8 +656,8 @@ class CoinCollectionManager {
                     </div>
                 </div>
                 <div class="form-group mt-4">
-                    <label>Condition Notes</label>
-                    <textarea class="form-input form-textarea" placeholder="Detailed condition notes, defects, cleaning evidence, etc." 
+                    <label for="condition_notes_${coin.id}">Condition Notes</label>
+                    <textarea id="condition_notes_${coin.id}" name="condition_notes_${coin.id}" class="form-input form-textarea" placeholder="Detailed condition notes, defects, cleaning evidence, etc." 
                               onchange="updateCoinCondition(${coin.id}, 'notes', this.value)">${coin.condition.notes}</textarea>
                 </div>
             </div>
@@ -772,7 +784,8 @@ class CoinCollectionManager {
                     Additional Notes
                 </h3>
                 <div class="form-group">
-                    <textarea class="form-input form-textarea" placeholder="General notes, research findings, provenance, historical context, etc." 
+                    <label for="general_notes_${coin.id}">General Notes</label>
+                    <textarea id="general_notes_${coin.id}" name="general_notes_${coin.id}" class="form-input form-textarea" placeholder="General notes, research findings, provenance, historical context, etc." 
                               onchange="updateCoinField(${coin.id}, 'notes', this.value)">${coin.notes}</textarea>
                 </div>
             </div>
@@ -1223,19 +1236,30 @@ class CoinCollectionManager {
 
     // Image Management
     handleImageUpload(coinId, side, fileInput) {
+        console.log('handleImageUpload called:', { coinId, side, fileInput });
+        
         const file = fileInput.files[0];
-        if (!file) return;
-
-        // Ensure file is an image for main coin images
-        if (!file.type.startsWith('image/')) {
-            alert('Please select an image file for the coin images.');
+        if (!file) {
+            console.log('No file selected');
             return;
         }
 
-        this.logToConsole(`Processing ${side} image for coin ${coinId}...`, 'info');
+        console.log('File selected:', { name: file.name, type: file.type, size: file.size });
+
+        // Ensure file is an image for main coin images
+        if (!file.type.startsWith('image/')) {
+            const errorMsg = 'Please select an image file for the coin images.';
+            alert(errorMsg);
+            this.logToConsole(errorMsg, 'error');
+            return;
+        }
+
+        this.logToConsole(`Processing ${side} image for coin ${coinId}... (${file.name}, ${(file.size/1024).toFixed(1)}KB)`, 'info');
         
         // Compress and resize image to save storage space
         this.compressImage(file, 800, 0.8).then(compressedDataUrl => {
+            console.log('Image compressed successfully, size:', compressedDataUrl.length);
+            
             const coin = this.coins.find(c => c.id === coinId);
             if (coin) {
                 coin.images[side] = compressedDataUrl;
@@ -1248,31 +1272,41 @@ class CoinCollectionManager {
                 this.renderCoins();
                 this.saveToStorage();
                 
-                this.logToConsole(`${side} image processed and saved`, 'success');
+                this.logToConsole(`${side} image processed and saved successfully`, 'success');
                 
                 // Trigger AI analysis with compressed image data URL
                 this.analyzeImage(coinId, side, compressedDataUrl);
+            } else {
+                console.error('Coin not found:', coinId);
+                this.logToConsole(`Error: Coin ${coinId} not found`, 'error');
             }
         }).catch(error => {
             this.logToConsole(`Failed to process ${side} image: ${error.message}`, 'error');
             console.error('Image compression failed:', error);
+            alert(`Failed to process image: ${error.message}`);
         });
     }
     
     // Compress image to reduce storage usage
     compressImage(file, maxWidth = 800, quality = 0.8) {
+        console.log('Starting image compression:', { fileName: file.name, fileSize: file.size, maxWidth, quality });
+        
         return new Promise((resolve, reject) => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const img = new Image();
             
             img.onload = () => {
+                console.log('Image loaded for compression:', { originalWidth: img.width, originalHeight: img.height });
+                
                 // Calculate new dimensions
                 let { width, height } = img;
                 if (width > maxWidth) {
                     height = (height * maxWidth) / width;
                     width = maxWidth;
                 }
+                
+                console.log('Calculated new dimensions:', { width, height });
                 
                 canvas.width = width;
                 canvas.height = height;
@@ -1289,11 +1323,25 @@ class CoinCollectionManager {
                 
                 console.log(`Image compressed: ${Math.round(originalSize/1024)}KB → ${Math.round(compressedSize/1024)}KB`);
                 
+                // Clean up object URL
+                URL.revokeObjectURL(img.src);
+                
                 resolve(compressedDataUrl);
             };
             
-            img.onerror = () => reject(new Error('Failed to load image'));
-            img.src = URL.createObjectURL(file);
+            img.onerror = (error) => {
+                console.error('Image load error:', error);
+                URL.revokeObjectURL(img.src);
+                reject(new Error('Failed to load image for compression'));
+            };
+            
+            try {
+                img.src = URL.createObjectURL(file);
+                console.log('Created object URL for image:', img.src);
+            } catch (error) {
+                console.error('Failed to create object URL:', error);
+                reject(new Error('Failed to create object URL for image'));
+            }
         });
     }
     
@@ -1681,6 +1729,7 @@ class CoinCollectionManager {
 
     // Storage Management
     async saveToStorage() {
+        console.log('saveToStorage called, coins count:', this.coins.length);
         try {
             // Check storage quota before saving
             const dataToSave = JSON.stringify(this.coins);
@@ -1694,6 +1743,8 @@ class CoinCollectionManager {
             const estimatedSize = (dataToSave.length + metaToSave.length) * 2; // UTF-16 encoding
             const sizeMB = (estimatedSize / (1024 * 1024)).toFixed(2);
             
+            console.log('Storage size estimate:', { sizeMB, estimatedSize });
+            
             // Check if we're approaching localStorage limit (usually 5-10MB)
             if (estimatedSize > 4 * 1024 * 1024) { // 4MB threshold
                 this.logToConsole(`Storage size (${sizeMB}MB) approaching limit, compressing...`, 'warning');
@@ -1704,6 +1755,7 @@ class CoinCollectionManager {
             localStorage.setItem('coinCollection', dataToSave);
             localStorage.setItem('coinCollectionMeta', metaToSave);
             
+            console.log('Data saved to localStorage successfully');
             this.logToConsole(`Storage saved successfully (${sizeMB}MB)`, 'success');
             this.updateStorageStatus(estimatedSize);
         } catch (error) {
@@ -1936,6 +1988,11 @@ function setQuickAnnotation(type) {
 }
 
 function handleImageUpload(coinId, side, input) {
+    console.log('Global handleImageUpload called:', { coinId, side, input });
+    if (!coinManager) {
+        console.error('coinManager not initialized');
+        return;
+    }
     coinManager.handleImageUpload(coinId, side, input);
 }
 
@@ -2474,17 +2531,25 @@ function handleDrop(event, coinId) {
 }
 
 function handleMainImageDrop(event, coinId, side) {
+    console.log('handleMainImageDrop called:', { coinId, side });
     event.preventDefault();
     event.currentTarget.classList.remove('drag-over', 'drag-enter');
     
     const files = event.dataTransfer.files;
+    console.log('Files dropped:', files.length);
+    
     if (files.length > 0) {
         const file = files[0]; // Only take the first file for main images
+        console.log('Processing dropped file:', { name: file.name, type: file.type, size: file.size });
+        
         if (file.type.startsWith('image/')) {
             const mockInput = {
                 files: [file]
             };
             coinManager.handleImageUpload(coinId, side, mockInput);
+        } else {
+            console.log('Dropped file is not an image:', file.type);
+            alert('Please drop an image file.');
         }
     }
 }
@@ -2506,6 +2571,41 @@ function setMediaFilter(filter) {
         coinManager.renderCoins();
         coinManager.saveToStorage();
     }
+}
+
+// Test function to debug image upload issues
+function testImageUpload() {
+    console.log('=== IMAGE UPLOAD TEST ===');
+    console.log('coinManager exists:', !!coinManager);
+    console.log('coins count:', coinManager ? coinManager.coins.length : 'N/A');
+    
+    if (!coinManager || coinManager.coins.length === 0) {
+        alert('Please add a coin first before testing image upload');
+        return;
+    }
+    
+    const firstCoin = coinManager.coins[0];
+    console.log('Testing with coin:', firstCoin.id, firstCoin.title);
+    
+    // Create a test file input
+    const testInput = document.createElement('input');
+    testInput.type = 'file';
+    testInput.accept = 'image/*';
+    testInput.style.display = 'none';
+    
+    testInput.onchange = function(e) {
+        console.log('Test file selected:', e.target.files[0]);
+        if (e.target.files[0]) {
+            console.log('Calling handleImageUpload with test file...');
+            handleImageUpload(firstCoin.id, 'obverse', e.target);
+        }
+        document.body.removeChild(testInput);
+    };
+    
+    document.body.appendChild(testInput);
+    testInput.click();
+    
+    console.log('Test file dialog opened');
 }
 
 function setMediaViewMode(mode) {

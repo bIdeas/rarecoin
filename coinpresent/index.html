@@ -47,7 +47,7 @@
         <!-- Control Panel -->
         <div class="control-panel">
             <div class="mode-selector">
-                <label for="mode-buttons">Interaction Mode:</label>
+                <label>Interaction Mode:</label>
                 <div class="mode-buttons" id="mode-buttons">
                     <button class="mode-btn active" data-mode="annotate" onclick="setMode('annotate')">
                         <i class="fas fa-edit"></i> Annotate
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <div class="annotation-tools">
-                <label for="annotation-buttons">Quick Annotations:</label>
+                <label>Quick Annotations:</label>
                 <div class="annotation-buttons" id="annotation-buttons">
                     <button class="annotation-btn" onclick="setQuickAnnotation('Date')">Date</button>
                     <button class="annotation-btn" onclick="setQuickAnnotation('Mintmark')">Mintmark</button>
@@ -79,6 +79,9 @@
             <div class="view-controls">
                 <button class="btn btn-outline" onclick="toggleComparisonView()" id="comparisonToggle">
                     <i class="fas fa-columns"></i> Enable Comparison View
+                </button>
+                <button class="btn btn-outline" onclick="testImageUpload()" id="testUploadBtn" style="margin-left: 10px;">
+                    <i class="fas fa-bug"></i> Test Image Upload
                 </button>
             </div>
 

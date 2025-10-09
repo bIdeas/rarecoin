@@ -696,29 +696,29 @@ class OfflineModelManager {
    * Start memory monitoring to detect potential memory leaks
    */
   startMemoryMonitoring() {
-    // Monitor memory usage every 30 seconds
+    // Monitor memory usage every 60 seconds (reduced frequency)
     this.memoryMonitorInterval = setInterval(() => {
       if (this.tf && this.tf.memory) {
         const memInfo = this.tf.memory();
         const memoryUsageMB = memInfo.numBytes / (1024 * 1024);
         
-        // Log memory usage if it's high (over 500MB)
-        if (memoryUsageMB > 500) {
-          console.warn(`High memory usage in GPU: ${memoryUsageMB.toFixed(2)} MB, most likely due to a memory leak`);
-          
-          // If memory usage is extremely high, try to clean up
-          if (memoryUsageMB > 1000) {
-            console.warn('Attempting to clean up GPU memory...');
-            this.cleanupMemory();
-          }
+        // Only log warnings for very high memory usage (over 2GB)
+        if (memoryUsageMB > 2048) {
+          console.warn(`Very high memory usage in GPU: ${memoryUsageMB.toFixed(2)} MB, attempting cleanup`);
+          this.cleanupMemory();
+        }
+        // Log moderate memory usage less frequently and at info level
+        else if (memoryUsageMB > 1024) {
+          console.info(`GPU memory usage: ${memoryUsageMB.toFixed(2)} MB (${memInfo.numTensors} tensors)`);
         }
         
-        // Log detailed memory info for debugging
-        if (memoryUsageMB > 100) {
-          console.log(`TensorFlow.js Memory Usage: ${memoryUsageMB.toFixed(2)} MB (${memInfo.numTensors} tensors)`);
+        // Proactive cleanup for moderate memory usage
+        if (memoryUsageMB > 1536) {
+          console.info('Performing proactive memory cleanup...');
+          this.cleanupMemory();
         }
       }
-    }, 30000); // Check every 30 seconds
+    }, 60000); // Check every 60 seconds
   }
 
   /**
@@ -736,15 +736,26 @@ class OfflineModelManager {
    */
   cleanupMemory() {
     try {
+      const memBefore = this.tf ? this.tf.memory() : null;
+      
       // Force garbage collection of tensors
-      if (this.tf && this.tf.disposeVariables) {
-        this.tf.disposeVariables();
+      if (this.tf) {
+        // Dispose variables if available
+        if (this.tf.disposeVariables) {
+          this.tf.disposeVariables();
+        }
+        
+        // Force tensor cleanup
+        if (this.tf.engine && this.tf.engine().startScope) {
+          this.tf.engine().endScope();
+          this.tf.engine().startScope();
+        }
       }
       
-      // Dispose any cached models that aren't essential
+      // Dispose any cached models that aren't essential (keep only classification)
       Object.keys(this.models).forEach(modelType => {
         if (modelType !== 'classification' && this.models[modelType]) {
-          console.log(`Disposing ${modelType} model to free memory`);
+          console.info(`Disposing ${modelType} model to free memory`);
           if (this.models[modelType].dispose) {
             this.models[modelType].dispose();
           }
@@ -752,7 +763,18 @@ class OfflineModelManager {
         }
       });
       
-      console.log('Memory cleanup completed');
+      // Force JavaScript garbage collection if available
+      if (window.gc) {
+        window.gc();
+      }
+      
+      const memAfter = this.tf ? this.tf.memory() : null;
+      if (memBefore && memAfter) {
+        const memFreed = (memBefore.numBytes - memAfter.numBytes) / (1024 * 1024);
+        console.info(`Memory cleanup completed. Freed: ${memFreed.toFixed(2)} MB`);
+      } else {
+        console.info('Memory cleanup completed');
+      }
     } catch (error) {
       console.error('Error during memory cleanup:', error);
     }
